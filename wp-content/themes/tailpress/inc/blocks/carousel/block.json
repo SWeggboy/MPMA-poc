@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "tailpress/carousel",
+  "title": "Testimonial Carousel",
+  "category": "mpma-custom",
+  "icon": "format-quote",
+  "description": "Display testimonials in a carousel slider",
+  "keywords": ["testimonial", "carousel", "quotes", "slider"],
+  "textdomain": "tailpress",
+  "attributes": {
+    "testimonials": {
+      "type": "array",
+      "default": []
+    },
+    "autoplay": {
+      "type": "boolean",
+      "default": true
+    },
+    "speed": {
+      "type": "number",
+      "default": 5000
+    }
+  },
+  "supports": {
+    "align": ["wide", "full"],
+    "html": false
+  },
+  "editorScript": "file:./editor.js",
+  "editorStyle": "file:./editor.css",
+  "style": "file:./style.css",
+  "render": "file:./render.php"
+}

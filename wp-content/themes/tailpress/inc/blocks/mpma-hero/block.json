@@ -1,0 +1,60 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "tailpress/mpma-hero",
+  "title": "MPMA Hero",
+  "category": "mpma-custom",
+  "icon": "cover-image",
+  "description": "Hero section with page-title fallback, cover image, configurable hero dimensions, and button content.",
+  "keywords": ["hero", "cover", "banner", "title"],
+  "textdomain": "tailpress",
+  "attributes": {
+    "headerText": {
+      "type": "string",
+      "default": ""
+    },
+    "backgroundImage": {
+      "type": "string",
+      "default": ""
+    },
+    "backgroundImageId": {
+      "type": "number",
+      "default": 0
+    },
+    "heroHeight": {
+      "type": "string",
+      "default": "420px"
+    },
+    "heroWidth": {
+      "type": "string",
+      "default": "100vw"
+    },
+    "contentMaxWidth": {
+      "type": "string",
+      "default": "1200px"
+    },
+    "overlayOpacity": {
+      "type": "number",
+      "default": 30
+    },
+    "contentAlignment": {
+      "type": "string",
+      "default": "center"
+    },
+    "verticalAlignment": {
+      "type": "string",
+      "default": "center"
+    }
+  },
+  "supports": {
+    "align": ["wide", "full"],
+    "anchor": true,
+    "html": false,
+    "spacing": {
+      "margin": true,
+      "padding": true
+    }
+  },
+  "editorScript": "file:./editor.js",
+  "render": "file:./render.php"
+}

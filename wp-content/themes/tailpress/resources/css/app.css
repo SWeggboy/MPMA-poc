@@ -1,0 +1,343 @@
+@import 'tailwindcss';
+@import './theme.css' layer(base);
+@import './utilities.css';
+@import './custom.css' layer(utilities);
+
+@source '../../vendor/tailpress/framework/**/*.php';
+@source '../../vendor/tailpress/framework/**/**/*.php';
+
+@utility container {
+    margin-inline: auto;
+    padding-inline: 2rem;
+}
+
+/*
+  The default border color has changed to `currentColor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-zinc-200, currentColor);
+  }
+  body {
+    font-family: var(--font-roboto);
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-roboto);
+  }
+  h1, h2, h3 {
+    font-weight: 700;
+  }
+  h4, h5, h6 {
+    font-weight: 600;
+  }
+  
+  /* Responsive heading sizes using Tailwind utilities */
+  h1 {
+    @apply text-3xl md:text-4xl lg:text-5xl;
+  }
+  h2 {
+    @apply text-2xl md:text-3xl lg:text-4xl;
+  }
+  h3 {
+    @apply text-xl md:text-2xl lg:text-3xl;
+  }
+  h4 {
+    @apply text-lg md:text-xl lg:text-2xl;
+  }
+  h5 {
+    @apply text-base md:text-lg lg:text-xl;
+  }
+  h6 {
+    @apply text-sm md:text-base lg:text-lg;
+  }
+}
+
+/* Custom border color utilities for theme colors */
+@layer utilities {
+  .border-primary {
+    border-color: var(--color-primary);
+  }
+  .border-secondary {
+    border-color: var(--color-secondary);
+  }
+  .border-accent {
+    border-color: var(--color-accent);
+  }
+  .border-dark {
+    border-color: var(--color-dark);
+  }
+  .border-light {
+    border-color: var(--color-light);
+  }
+}
+
+/* Default button hover styles */
+@layer components {
+  .wp-block-button__link,
+  .wp-element-button {
+    border-radius: 4px !important;
+    @apply transition-all duration-200 ease-in-out;
+  }
+  
+  .wp-block-button__link:hover,
+  .wp-element-button:hover {
+    background-color: var(--color-accent) !important;
+    color: var(--color-surface) !important;
+    border-color: var(--color-surface) !important;
+  }
+  
+  /* Navigation link hover styles */
+  #primary-menu a,
+  #secondary-menu a {
+    position: relative;
+    opacity: 0.90;
+    @apply transition-all duration-300;
+  }
+  
+  #primary-menu a:hover,
+  #secondary-menu a:hover {
+    opacity: 1;
+  }
+  
+  #primary-menu a::after,
+  #secondary-menu a::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 0px;
+    background-color: currentColor;
+    transition: height 0.25s ease-in-out;
+  }
+  
+  #primary-menu a:hover::after,
+  #secondary-menu a:hover::after {
+    height: 2px;
+  }
+
+  /* Secondary nav dropdown overlays (desktop): tertiary + quaternary levels */
+  @variant md {
+    #secondary-navigation {
+      position: relative;
+      z-index: 20;
+      overflow: visible;
+    }
+
+    #secondary-navigation nav,
+    #secondary-menu,
+    #secondary-menu ul,
+    #secondary-menu li {
+      overflow: visible;
+    }
+
+    #secondary-menu > ul,
+    #secondary-menu .sub-menu {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    #secondary-menu > ul {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    #secondary-menu > ul > li {
+      position: relative;
+    }
+
+    #secondary-menu .sub-menu > li,
+    #secondary-menu .sub-menu li.menu-item-has-children {
+      position: relative;
+    }
+
+    #secondary-menu > ul > li > .sub-menu {
+      display: block;
+      position: absolute;
+      top: calc(100% + 3.65rem);
+      left: -25%;
+      min-width: 11rem;
+      background: var(--color-surface);
+      border-bottom: 2px solid var(--color-primary);
+      opacity: 0;
+      visibility: hidden;
+      transform: none;
+      transition: opacity 0.18s ease, visibility 0s linear 0.18s;
+      z-index: 60;
+    }
+
+    #secondary-menu .sub-menu .sub-menu {
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 100%;
+      min-width: 11rem;
+      background: var(--color-surface);
+      border-bottom: 2px solid var(--color-primary);
+      opacity: 0;
+      visibility: hidden;
+      transform: none;
+      transition: opacity 0.18s ease, visibility 0s linear 0.18s;
+      width: max-content;
+      z-index: 70;
+    }
+
+    #secondary-menu > ul > li.menu-item-has-children > a:hover + .sub-menu,
+    #secondary-menu > ul > li.menu-item-has-children > a:focus-visible + .sub-menu,
+    #secondary-menu > ul > li.menu-item-has-children > .sub-menu:hover,
+    #secondary-menu > ul > li.menu-item-has-children > .sub-menu:focus-within,
+    #secondary-menu .sub-menu li.menu-item-has-children:hover > .sub-menu,
+    #secondary-menu .sub-menu li.menu-item-has-children:focus-within > .sub-menu {
+      opacity: 1;
+      visibility: visible;
+      transition-delay: 0s;
+    }
+
+    #secondary-menu .sub-menu > li {
+      position: relative;
+      width: 100%;
+    }
+
+    #secondary-menu .sub-menu > li > a {
+      display: block;
+      padding: 0.6rem 0.65rem 0.6rem 1.65rem;
+      color: var(--color-primary);
+      font-size: 0.95rem;
+      font-weight: 500;
+      line-height: 1.3;
+    }
+
+    #secondary-menu .sub-menu > li > a::after {
+      display: none;
+    }
+
+    #secondary-menu .sub-menu > li > a:hover,
+    #secondary-menu .sub-menu > li > a:focus-visible {
+      background: transparent;
+      color: var(--color-accent);
+      opacity: 1;
+    }
+  }
+
+  /* Mobile secondary menu: tap/click expand tertiary + quaternary */
+  @variant max-md {
+    #mobile-secondary-menu .menu-item-has-children > .sub-menu {
+      display: none;
+      padding-left: 1rem;
+      margin-top: 0.35rem;
+    }
+
+    #mobile-secondary-menu .menu-item-has-children.is-open > .sub-menu {
+      display: block;
+    }
+
+    #mobile-secondary-menu .menu-item-has-children > a {
+      display: inline-block;
+      width: calc(100% - 2rem);
+      vertical-align: middle;
+    }
+
+    #mobile-secondary-menu .submenu-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.75rem;
+      height: 1.75rem;
+      margin-left: 0.25rem;
+      background: transparent;
+      border: 0;
+      color: inherit;
+      cursor: pointer;
+      vertical-align: middle;
+    }
+
+    #mobile-secondary-menu .submenu-toggle::before {
+      content: '+';
+      font-size: 1rem;
+      line-height: 1;
+      font-weight: 700;
+    }
+
+    #mobile-secondary-menu .menu-item-has-children.is-open > .submenu-toggle::before {
+      content: '−';
+    }
+  }
+  
+  /* Footer social icons styling */
+  .wp-block-social-links.is-style-logos-only .wp-social-link {
+    background-color: transparent !important;
+    color: currentColor !important;
+  }
+  
+  .wp-block-social-links .wp-social-link {
+    background-color: var(--color-primary) !important;
+    @apply transition-all duration-200;
+  }
+  
+  .wp-block-social-links .wp-social-link:hover {
+    background-color: var(--color-accent) !important;
+  }
+  
+  .wp-block-social-links .wp-social-link svg {
+    width: 20px !important;
+    height: 20px !important;
+  }
+  
+  /* Custom social icons */
+  .social-icons {
+    display: flex;
+    gap: 1.25rem;
+  }
+  a.social-icon {
+    text-decoration: none !important;
+  }
+  
+  .social-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background-color: var(--color-white);
+    color: var(--color-primary);
+    text-decoration: none;
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .social-icon:hover {
+    background-color: var(--color-surface-hover);
+    transform: scale(1.2);
+  }
+  
+  .social-icon i {
+    font-size: 20px;
+  }
+  
+  /* Footer widget responsive content */
+  .footer-column {
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+  }
+  
+  .footer-column img {
+    max-width: 100% !important;
+    height: auto !important;
+    object-fit: contain;
+  }
+  
+  .footer-column * {
+    max-width: 100%;
+  }
+}

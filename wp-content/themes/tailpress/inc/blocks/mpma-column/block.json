@@ -1,0 +1,22 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "tailpress/mpma-column",
+  "title": "MPMA Column",
+  "category": "mpma-custom",
+  "icon": "columns",
+  "description": "Columns wrapper with equal-height stretch behavior for contained content.",
+  "keywords": ["columns", "equal height", "layout"],
+  "textdomain": "tailpress",
+  "supports": {
+    "align": ["wide", "full"],
+    "anchor": true,
+    "html": false,
+    "spacing": {
+      "margin": true,
+      "padding": true
+    }
+  },
+  "editorScript": "file:./editor.js",
+  "render": "file:./render.php"
+}

@@ -1,0 +1,63 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "tailpress/homepage-image-text",
+  "title": "Homepage Image and Text",
+  "category": "mpma-custom",
+  "icon": "columns",
+  "description": "A two-column section with image and text content",
+  "keywords": ["image", "text", "two-column", "content"],
+  "textdomain": "tailpress",
+  "attributes": {
+    "image": {
+      "type": "string",
+      "default": ""
+    },
+    "imageId": {
+      "type": "number",
+      "default": 0
+    },
+    "imagePosition": {
+      "type": "string",
+      "default": "left"
+    },
+    "heading": {
+      "type": "string",
+      "default": "Advocacy That<br>Drives Industry Forward"
+    },
+    "content": {
+      "type": "string",
+      "default": "MPMA represents the collective interests of the mechanical power transmission industry at the federal level, ensuring that members' priorities are heard and advanced. From regulatory discussions to workforce policy and manufacturing initiatives, the alliance provides a unified, influential voice for a sector vital to the global economy."
+    },
+    "backgroundColor": {
+      "type": "string",
+      "default": "white"
+    },
+    "enableBorderShadow": {
+      "type": "boolean",
+      "default": true
+    },
+    "imageWidth": {
+      "type": "string",
+      "default": "100%"
+    },
+    "textAlignment": {
+      "type": "string",
+      "default": "left"
+    },
+    "buttonText": {
+      "type": "string",
+      "default": ""
+    },
+    "buttonLink": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "supports": {
+    "align": ["wide", "full"],
+    "html": false
+  },
+  "editorScript": "file:./editor.js",
+  "render": "file:./render.php"
+}

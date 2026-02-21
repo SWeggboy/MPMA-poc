@@ -1,0 +1,107 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "tailpress/homepage-cta-bg",
+  "title": "Homepage CTA with Background",
+  "category": "mpma-custom",
+  "icon": "cover-image",
+  "description": "A call-to-action section with background image",
+  "keywords": ["cta", "hero", "background", "banner"],
+  "textdomain": "tailpress",
+  "attributes": {
+    "backgroundImage": {
+      "type": "string",
+      "default": ""
+    },
+    "backgroundImageId": {
+      "type": "number",
+      "default": 0
+    },
+    "backgroundColor": {
+      "type": "string",
+      "default": ""
+    },
+    "backgroundPosition": {
+      "type": "string",
+      "default": "center center"
+    },
+    "backgroundSize": {
+      "type": "string",
+      "default": "cover"
+    },
+    "backgroundRepeat": {
+      "type": "string",
+      "default": "no-repeat"
+    },
+    "backgroundAttachment": {
+      "type": "string",
+      "default": "scroll"
+    },
+    "overlayOpacity": {
+      "type": "number",
+      "default": 80
+    },
+    "gradient": {
+      "type": "string",
+      "default": ""
+    },
+    "heading": {
+      "type": "string",
+      "default": "The Power of a Combined Alliance"
+    },
+    "description": {
+      "type": "string",
+      "default": "As the industry evolves through consolidation and new technologies, MPMA provides a stronger, more connected community. By joining forces, AGMA and ABMA members gain:"
+    },
+    "buttonText": {
+      "type": "string",
+      "default": "View Our FAQ's"
+    },
+    "buttonLink": {
+      "type": "string",
+      "default": "#"
+    },
+    "bottomText": {
+      "type": "string",
+      "default": ""
+    },
+    "iconBox1Title": {
+      "type": "string",
+      "default": "Expanded Access to Standards"
+    },
+    "iconBox1Desc": {
+      "type": "string",
+      "default": "Members benefit from a unified library of AGMA and ABMA standards."
+    },
+    "iconBox2Title": {
+      "type": "string",
+      "default": "Comprehensive Education & Training"
+    },
+    "iconBox2Desc": {
+      "type": "string",
+      "default": "MPMA delivers a broad curriculum of courses and technical sessions."
+    },
+    "iconBox3Title": {
+      "type": "string",
+      "default": "Broader Networking Connections"
+    },
+    "iconBox3Desc": {
+      "type": "string",
+      "default": "Through joint events, members connect across the full supply chain."
+    },
+    "iconBox4Title": {
+      "type": "string",
+      "default": "Unified Industry Insights"
+    },
+    "iconBox4Desc": {
+      "type": "string",
+      "default": "Combined research and market intelligence provide comprehensive views."
+    }
+  },
+  "supports": {
+    "align": ["wide", "full"],
+    "html": false
+  },
+  "editorScript": "file:./editor.js",
+  "render": "file:./render.php"
+}

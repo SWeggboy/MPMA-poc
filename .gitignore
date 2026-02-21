@@ -1,0 +1,38 @@
+# OS / Editor
+.DS_Store
+.vscode/
+.idea/
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# WordPress local config
+wp-config.php
+.htaccess
+
+# Runtime/cache
+wp-content/cache/
+wp-content/upgrade/
+wp-content/backups/
+wp-content/ai1wm-backups/
+wp-content/wflogs/
+
+# User-generated uploads (usually not source-controlled)
+wp-content/uploads/
+
+# Dependency/build outputs
+**/node_modules/
+**/vendor/
+**/dist/
+**/build/
+
+# Logs / temp
+*.log
+*.tmp
+
+# DB dumps / backups
+*.sql
+*.sql.bak
+*.bak

@@ -1,0 +1,80 @@
+/* Testimonial Carousel Block - Frontend Styles */
+.testimonial-carousel-wrapper {
+    position: relative;
+}
+
+.carousel-container {
+    position: relative;
+    min-height: 200px;
+    overflow: hidden !important;
+    width: 100%;
+}
+
+.carousel-wrapper {
+    min-height: 200px;
+    width: 100%;
+    display: flex;
+    gap: 0;
+    flex-wrap: nowrap;
+    will-change: transform;
+}
+
+.carousel-slide {
+    flex: 0 0 100%;
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.carousel-slide-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    width: 100%;
+    position: relative;
+}
+
+.carousel-dot {
+    cursor: pointer;
+    border: none;
+    padding: 0;
+}
+
+.testimonial {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    isolation: isolate;
+}
+
+.testimonial__content {
+    background-color: #c8c8c8;
+    border-radius: 10px;
+    padding: 25px 40px;
+    position: relative;
+    max-width: 970px;
+    margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+    .testimonial__content {
+        padding: 25px 75px;
+    }
+}
+
+.testimonial__content::after {
+    background-color: #c8c8c8;
+    left: 50%;
+    transform: translateX(-50%) scaleX(.75) rotate(45deg);
+    top: calc(100% - 7px);
+    border-width: 0;
+    box-sizing: content-box;
+    content: "";
+    display: block;
+    height: 14px;
+    position: absolute;
+    width: 14px;
+}

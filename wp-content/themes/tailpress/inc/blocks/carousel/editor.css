@@ -1,0 +1,10 @@
+/* Carousel Block - Editor Styles */
+.carousel-editor {
+    padding: 1.5rem;
+    border: 2px dashed #ddd;
+    border-radius: 0.5rem;
+}
+
+.carousel-preview {
+    margin-top: 1rem;
+}

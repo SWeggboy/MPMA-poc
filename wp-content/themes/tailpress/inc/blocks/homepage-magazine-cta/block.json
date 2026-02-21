@@ -1,0 +1,75 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "tailpress/homepage-magazine-cta",
+  "title": "Homepage Magazine CTA",
+  "category": "mpma-custom",
+  "icon": "book",
+  "description": "Promote industry publications with images and links",
+  "keywords": ["magazine", "publication", "cta", "links"],
+  "textdomain": "tailpress",
+  "attributes": {
+    "heading": {
+      "type": "string",
+      "default": "Industry Publications That Inform and Inspire"
+    },
+    "description": {
+      "type": "string",
+      "default": "MPMA supports two of the most respected publications in mechanical power transmission:"
+    },
+    "magazine1Image": {
+      "type": "string",
+      "default": ""
+    },
+    "magazine1ImageId": {
+      "type": "number",
+      "default": 0
+    },
+    "magazine1Title": {
+      "type": "string",
+      "default": "Gear Technology"
+    },
+    "magazine1Description": {
+      "type": "string",
+      "default": "Delivering technical expertise, best practices, and thought leadership in gear manufacturing."
+    },
+    "magazine1ButtonText": {
+      "type": "string",
+      "default": "Visit Gear Technology"
+    },
+    "magazine1Url": {
+      "type": "string",
+      "default": "https://www.geartechnology.com/"
+    },
+    "magazine2Image": {
+      "type": "string",
+      "default": ""
+    },
+    "magazine2ImageId": {
+      "type": "number",
+      "default": 0
+    },
+    "magazine2Title": {
+      "type": "string",
+      "default": "Power Transmission Engineering"
+    },
+    "magazine2Description": {
+      "type": "string",
+      "default": "Covering the entire motion and power ecosystem, from design to performance."
+    },
+    "magazine2ButtonText": {
+      "type": "string",
+      "default": "Visit PTE"
+    },
+    "magazine2Url": {
+      "type": "string",
+      "default": "https://www.powertransmission.com/"
+    }
+  },
+  "supports": {
+    "align": ["wide", "full"],
+    "html": false
+  },
+  "editorScript": "file:./editor.js",
+  "render": "file:./render.php"
+}
