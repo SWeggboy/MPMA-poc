@@ -1,31 +1,25 @@
-@import 'tailwindcss';
-@import './theme.css';
-@import './custom.css';
+@import './app.css';
 
-h1 {
-    @apply text-3xl mb-8;
-    font-family: var(--font-sans);
-}
-
-.entry-content,
-.block-editor-block-list__layout {
-    font-family: var(--font-sans);
-}
-
-/*
-  The default border color has changed to `currentColor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
-@layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentColor);
+@layer components {
+  .editor-styles-wrapper {
+    font-family: var(--font-roboto);
+    color: var(--color-dark);
+    background-color: var(--color-surface);
   }
+
+  .editor-styles-wrapper .is-root-container {
+    max-width: var(--layout-content-width);
+    margin-inline: auto;
+    padding-inline: clamp(1rem, 4vw, var(--layout-side-margin));
+  }
+
+  .block-editor-iframe__html.is-zoomed-out .editor-styles-wrapper .border {
+    border-width: calc(1px / var(--wp-block-editor-iframe-zoom-out-scale, 1));
+  }
+
+  .block-editor-iframe__html.is-zoomed-out .editor-styles-wrapper .block-editor-block-list__layout .block-editor-block-list__block.is-highlighted::after,
+  .block-editor-iframe__html.is-zoomed-out .editor-styles-wrapper .block-editor-block-list__layout .block-editor-block-list__block:not([contenteditable='true']):focus::after {
+    border-radius: inherit;
+  }
+
 }

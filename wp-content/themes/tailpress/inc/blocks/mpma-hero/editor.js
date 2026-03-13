@@ -1,4 +1,8 @@
 (function(wp) {
+    if (!wp || !wp.blocks || !wp.blockEditor || !wp.components || !wp.i18n || !wp.element || !wp.data) {
+        return;
+    }
+
     const { registerBlockType } = wp.blocks;
     const { InspectorControls, useBlockProps, MediaUpload, MediaUploadCheck, InnerBlocks, RichText } = wp.blockEditor;
     const { Button, PanelBody, TextControl, SelectControl, RangeControl } = wp.components;

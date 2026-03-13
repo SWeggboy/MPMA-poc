@@ -2,6 +2,10 @@
  * Homepage CTA with Background Block - Editor Script (data-id 566b387)
  */
 (function(wp) {
+    if (!wp || !wp.blocks || !wp.blockEditor || !wp.components || !wp.i18n || !wp.element) {
+        return;
+    }
+
     const { registerBlockType } = wp.blocks;
     const { InspectorControls, useBlockProps, MediaUpload, MediaUploadCheck, RichText } = wp.blockEditor;
     const { Button, PanelBody, TextControl, TextareaControl } = wp.components;

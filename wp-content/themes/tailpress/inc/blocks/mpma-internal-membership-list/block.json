@@ -1,0 +1,127 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "tailpress/mpma-internal-membership-list",
+  "title": "MPMA Internal Membership List",
+  "category": "mpma-custom",
+  "icon": "groups",
+  "description": "Interactive internal membership list with organization, section, and filter controls.",
+  "keywords": ["membership", "member list", "organization", "agma", "abma"],
+  "textdomain": "tailpress",
+  "attributes": {
+    "title": {
+      "type": "string",
+      "default": "Member List"
+    },
+    "subtitle": {
+      "type": "string",
+      "default": "Select an organization to view members"
+    },
+    "organizations": {
+      "type": "array",
+      "default": [
+        {
+          "slug": "agma",
+          "label": "AGMA",
+          "imageUrl": "",
+          "imageId": 0,
+          "sections": [
+            {
+              "slug": "corporate",
+              "label": "Corporate",
+              "filters": [
+                { "slug": "num", "label": "#", "items": [] },
+                { "slug": "a", "label": "A", "items": [] },
+                { "slug": "b", "label": "B", "items": [] },
+                { "slug": "c", "label": "C", "items": [] },
+                { "slug": "d", "label": "D", "items": [] },
+                { "slug": "e", "label": "E", "items": [] },
+                { "slug": "f", "label": "F", "items": [] },
+                { "slug": "g", "label": "G", "items": [] },
+                { "slug": "h", "label": "H", "items": [] },
+                { "slug": "i", "label": "I", "items": [] },
+                { "slug": "j", "label": "J", "items": [] },
+                { "slug": "k", "label": "K", "items": [] },
+                { "slug": "l", "label": "L", "items": [] },
+                { "slug": "m", "label": "M", "items": [] },
+                { "slug": "n", "label": "N", "items": [] },
+                { "slug": "o", "label": "O", "items": [] },
+                { "slug": "p", "label": "P", "items": [] },
+                { "slug": "q", "label": "Q", "items": [] },
+                { "slug": "r", "label": "R", "items": [] },
+                { "slug": "s", "label": "S", "items": [] },
+                { "slug": "t", "label": "T", "items": [] },
+                { "slug": "u", "label": "U", "items": [] },
+                { "slug": "v", "label": "V", "items": [] },
+                { "slug": "w", "label": "W", "items": [] },
+                { "slug": "x", "label": "X", "items": [] },
+                { "slug": "y", "label": "Y", "items": [] },
+                { "slug": "z", "label": "Z", "items": [] }
+              ],
+              "items": []
+            },
+            {
+              "slug": "consultant",
+              "label": "Consultant",
+              "filters": [],
+              "items": []
+            },
+            {
+              "slug": "academic",
+              "label": "Academic",
+              "filters": [],
+              "items": []
+            },
+            {
+              "slug": "emeritus",
+              "label": "Emeritus",
+              "filters": [],
+              "items": []
+            },
+            {
+              "slug": "membership-timeframes",
+              "label": "Membership Timeframes",
+              "filters": [
+                { "slug": "100", "label": "100", "items": [] },
+                { "slug": "75", "label": "75", "items": [] },
+                { "slug": "50", "label": "50", "items": [] },
+                { "slug": "25", "label": "25", "items": [] },
+                { "slug": "20", "label": "20", "items": [] },
+                { "slug": "15", "label": "15", "items": [] },
+                { "slug": "10", "label": "10", "items": [] },
+                { "slug": "5", "label": "5", "items": [] }
+              ],
+              "items": []
+            }
+          ]
+        },
+        {
+          "slug": "abma",
+          "label": "ABMA",
+          "imageUrl": "",
+          "imageId": 0,
+          "sections": [
+            {
+              "slug": "primary-manufacturer-companies",
+              "label": "Primary Manufacturer Companies",
+              "filters": [],
+              "items": []
+            },
+            {
+              "slug": "associate-members",
+              "label": "Associate Members",
+              "filters": [],
+              "items": []
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "supports": {
+    "align": ["wide", "full"],
+    "html": false
+  },
+  "editorScript": "file:./editor.js",
+  "render": "file:./render.php"
+}

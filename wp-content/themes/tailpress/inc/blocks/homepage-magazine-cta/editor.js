@@ -2,6 +2,10 @@
  * Homepage Magazine CTA Block - Editor Script
  */
 (function(wp) {
+    if (!wp || !wp.blocks || !wp.blockEditor || !wp.components || !wp.i18n || !wp.element) {
+        return;
+    }
+
     const { registerBlockType } = wp.blocks;
     const { InspectorControls, useBlockProps, MediaUpload, MediaUploadCheck, RichText } = wp.blockEditor;
     const { Button, PanelBody, TextControl } = wp.components;

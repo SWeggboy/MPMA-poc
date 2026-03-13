@@ -1,0 +1,36 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "tailpress/mpma-internal-layout-column",
+  "title": "MPMA Internal Layout Column",
+  "category": "mpma-custom",
+  "icon": "columns",
+  "description": "Column container for MPMA Internal Layout rows.",
+  "keywords": ["layout", "column"],
+  "textdomain": "tailpress",
+  "parent": ["tailpress/mpma-internal-layout-row"],
+  "attributes": {
+    "widthColumns": {
+      "type": "number",
+      "default": 6
+    },
+    "verticalAlignment": {
+      "type": "string",
+      "default": "top"
+    },
+    "horizontalAlignment": {
+      "type": "string",
+      "default": "left"
+    }
+  },
+  "supports": {
+    "html": false,
+    "anchor": true,
+    "spacing": {
+      "margin": true,
+      "padding": true
+    }
+  },
+  "editorScript": "file:./editor.js",
+  "render": "file:./render.php"
+}

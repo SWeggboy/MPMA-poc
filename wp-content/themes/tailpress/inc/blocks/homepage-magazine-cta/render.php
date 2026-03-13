@@ -42,7 +42,7 @@ if (!function_exists('render_magazine_card')) {
           <?php endif; ?>
         
               <h3 class="text-xl font-medium !mt-2 mb-4 uppercase font-roboto-slab">
-                  <a href="<?php echo esc_url($url); ?>" class="!text-cta-gray hover:text-accent !no-underline">
+                  <a href="<?php echo esc_url($url); ?>" class="!text-gray hover:text-accent !no-underline">
                       <?php echo esc_html($title); ?>
                   </a>
               </h3>

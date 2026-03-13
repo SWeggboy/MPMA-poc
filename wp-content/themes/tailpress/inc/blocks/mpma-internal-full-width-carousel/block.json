@@ -1,0 +1,50 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "tailpress/mpma-internal-full-width-carousel",
+  "title": "MPMA Internal Carousel",
+  "category": "mpma-custom",
+  "icon": "images-alt2",
+  "description": "Full width internal carousel with centered slide content and header navigation.",
+  "keywords": ["carousel", "internal", "slides"],
+  "textdomain": "tailpress",
+  "attributes": {
+    "variation": {
+      "type": "string",
+      "default": "default"
+    },
+    "enableNavOverflow": {
+      "type": "boolean",
+      "default": true
+    },
+    "navViewportLabels": {
+      "type": "number",
+      "default": 4
+    },
+    "navColorPreset": {
+      "type": "string",
+      "default": "default"
+    },
+    "navActiveColor": {
+      "type": "string",
+      "default": "#000000"
+    },
+    "navInactiveColor": {
+      "type": "string",
+      "default": "#747474"
+    },
+    "animationSpeed": {
+      "type": "number",
+      "default": 400
+    }
+  },
+  "supports": {
+    "anchor": true,
+    "html": false,
+    "spacing": {
+      "margin": true
+    }
+  },
+  "editorScript": "file:./editor.js",
+  "render": "file:./render.php"
+}

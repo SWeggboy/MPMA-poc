@@ -1,0 +1,34 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "tailpress/mpma-internal-card-side",
+  "title": "MPMA Internal Card Side",
+  "category": "mpma-custom",
+  "icon": "align-pull-left",
+  "description": "A front or back side used inside MPMA Internal Card.",
+  "textdomain": "tailpress",
+  "parent": ["tailpress/mpma-internal-card"],
+  "attributes": {
+    "side": {
+      "type": "string",
+      "default": "front"
+    },
+    "backgroundImage": {
+      "type": "string",
+      "default": ""
+    },
+    "backgroundImageId": {
+      "type": "number",
+      "default": 0
+    },
+    "backgroundColor": {
+      "type": "string",
+      "default": "#ffffff"
+    }
+  },
+  "supports": {
+    "html": false,
+    "reusable": false
+  },
+  "editorScript": "file:./editor.js"
+}

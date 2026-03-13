@@ -1,0 +1,55 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "tailpress/mpma-internal-card-tile",
+  "title": "MPMA Internal Card Tile",
+  "category": "mpma-custom",
+  "icon": "screenoptions",
+  "description": "Grid or carousel holder for MPMA Internal Cards.",
+  "keywords": ["card tile", "card holder", "internal card", "carousel"],
+  "textdomain": "tailpress",
+  "attributes": {
+    "gap": {
+      "type": "string",
+      "default": "1.5rem"
+    },
+    "rows": {
+      "type": "number",
+      "default": 1
+    },
+    "columns": {
+      "type": "number",
+      "default": 2
+    },
+    "carouselEnabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "viewportCards": {
+      "type": "number",
+      "default": 1
+    },
+    "carouselWidthColumns": {
+      "type": "number",
+      "default": 0
+    },
+    "navColor": {
+      "type": "string",
+      "default": "#ffffff"
+    },
+    "loopEnabled": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "supports": {
+    "anchor": true,
+    "html": false,
+    "spacing": {
+      "margin": true,
+      "padding": true
+    }
+  },
+  "editorScript": "file:./editor.js",
+  "render": "file:./render.php"
+}

@@ -1,0 +1,60 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "tailpress/mpma-internal-layout",
+  "title": "MPMA Internal Layout",
+  "category": "mpma-custom",
+  "icon": "align-wide",
+  "description": "Internal page layout wrapper with optional full-width background, min-height, and sidebar-aware column control.",
+  "keywords": ["layout", "internal", "sidebar", "background"],
+  "textdomain": "tailpress",
+  "attributes": {
+    "fullWidth": {
+      "type": "boolean",
+      "default": false
+    },
+    "backgroundImage": {
+      "type": "string",
+      "default": ""
+    },
+    "backgroundImageId": {
+      "type": "number",
+      "default": 0
+    },
+    "usePageTitleOverlay": {
+      "type": "boolean",
+      "default": false
+    },
+    "minHeight": {
+      "type": "string",
+      "default": ""
+    },
+    "sidebarEnabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "contentColumns": {
+      "type": "number",
+      "default": 8
+    },
+    "contentPosition": {
+      "type": "string",
+      "default": "center"
+    },
+    "verticalContentPosition": {
+      "type": "string",
+      "default": "top"
+    }
+  },
+  "supports": {
+    "align": ["wide", "full"],
+    "anchor": true,
+    "html": false,
+    "spacing": {
+      "margin": true,
+      "padding": true
+    }
+  },
+  "editorScript": "file:./editor.js",
+  "render": "file:./render.php"
+}

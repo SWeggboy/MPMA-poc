@@ -257,34 +257,46 @@ rounded-full
 # Theme colors
 bg-primary
 bg-secondary
+bg-tertiary
 bg-accent
+bg-accent-light
 bg-dark
 bg-light
 text-primary
 text-secondary
+text-tertiary
 text-accent
+text-accent-light
 text-dark
 text-light
 border-primary
 border-secondary
+border-tertiary
 border-accent
+border-accent-light
 border-dark
 border-light
 
 # Important theme colors
 !bg-primary
 !bg-secondary
+!bg-tertiary
 !bg-accent
+!bg-accent-light
 !bg-dark
 !bg-light
 !text-primary
 !text-secondary
+!text-tertiary
 !text-accent
+!text-accent-light
 !text-dark
 !text-light
 !border-primary
 !border-secondary
+!border-tertiary
 !border-accent
+!border-accent-light
 !border-dark
 !border-light
 
@@ -414,12 +426,17 @@ hover:bg-primary/80 hover:bg-secondary/80 hover:bg-accent/80
 
 # Custom arbitrary values (add specific ones you need)
 min-h-[435px]
+md:min-h-[435px]
 max-w-[545px]
 !max-w-[545px]
 max-w-[1120px]
 rounded-[10px]
 text-[16px]
 w-[505px]
+-translate-x-[30%]
+pl-[30%]
+z-10
+z-15
 
 # Search box expandable classes
 h-[34px]

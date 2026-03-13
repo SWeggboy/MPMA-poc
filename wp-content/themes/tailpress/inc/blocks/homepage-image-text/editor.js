@@ -2,6 +2,10 @@
  * Homepage Image and Text Block - Editor Script
  */
 (function(wp) {
+    if (!wp || !wp.blocks || !wp.blockEditor || !wp.components || !wp.i18n || !wp.element) {
+        return;
+    }
+
     const { registerBlockType } = wp.blocks;
     const { InspectorControls, useBlockProps, MediaUpload, MediaUploadCheck, RichText } = wp.blockEditor;
     const { Button, PanelBody, SelectControl, ToggleControl, TextControl } = wp.components;

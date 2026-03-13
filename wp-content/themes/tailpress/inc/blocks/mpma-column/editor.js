@@ -1,4 +1,8 @@
 (function(wp) {
+    if (!wp || !wp.blocks || !wp.blockEditor || !wp.i18n || !wp.element) {
+        return;
+    }
+
     const { registerBlockType } = wp.blocks;
     const { useBlockProps, InnerBlocks } = wp.blockEditor;
     const { createElement: el } = wp.element;

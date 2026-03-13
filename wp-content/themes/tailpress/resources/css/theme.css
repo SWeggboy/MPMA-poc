@@ -6,20 +6,40 @@
     --breakpoint-xl: 1280px;
     --breakpoint-2xl: 1440px;
 
+    --layout-desktop-width: 90rem;
+    --layout-content-width: 82.5rem;
+    --layout-column-width: 5.5rem;
+    --layout-gutter-width: 1.5rem;
+    --layout-side-margin: 3.75rem;
+    --spacing-layout-gutter: 1.5rem;
+    --spacing-layout-margin: 3.75rem;
+
     --font-montserrat: 'Montserrat', sans-serif;
     --font-roboto: 'Roboto', sans-serif;
     --font-poppins: 'Poppins', sans-serif;
-    --font-roboto-slab: 'Roboto Slab', serif;
+    --font-roboto-slab: 'Roboto Slab', sans-serif;
 
     --color-primary: var(--wp--preset--color--primary);
     --color-secondary: var(--wp--preset--color--secondary);
+    --color-tertiary: var(--wp--preset--color--tertiary);
+    --color-quaternary: var(--wp--preset--color--quaternary);
     --color-accent: var(--wp--preset--color--accent);
+    --color-accent-light: var(--wp--preset--color--accent-light);
+    --color-accent-dark: var(--wp--preset--color--accent-dark);
     --color-dark: var(--wp--preset--color--dark);
     --color-light: var(--wp--preset--color--light);
-    --color-cta-gray: var(--wp--preset--color--cta-gray);
+    --color-gray: var(--wp--preset--color--gray);
     --color-white: #ffffff;
     --color-surface: #f6f6f6;
     --color-surface-hover: #f0f0f0;
+    --color-heading-h1: var(--wp--preset--color--heading-h1, #000000);
+    --color-heading-h2: var(--wp--preset--color--heading-h2, #367557);
+    --color-heading-h3: var(--wp--preset--color--heading-h3, #000000);
+    --color-heading-h4: var(--wp--preset--color--heading-h4, #68737c);
+    --color-button-bg: var(--wp--preset--color--accent-light, #0096FF);
+    --color-button-hover: var(--wp--preset--color--button-hover, #020048);
+    --color-button-text: var(--wp--preset--color--button-text, #ffffff);
+    --color-button-border: var(--wp--preset--color--button-border, #ffffff);
 
     --text-xs: var(--wp--preset--font-size--xs, 0.75rem);
     --text-sm: var(--wp--preset--font-size--sm, 0.875rem);
@@ -34,4 +54,11 @@
     --text-7xl: var(--wp--preset--font-size--7-xl, 4.5rem);
     --text-8xl: var(--wp--preset--font-size--8-xl, 6rem);
     --text-9xl: var(--wp--preset--font-size--9-xl, 8rem);
+}
+
+:root {
+  --color-accent-light: var(--wp--preset--color--accent-light);
+  --color-accent-dark: var(--wp--preset--color--accent-dark);
+  --color-tertiary: var(--wp--preset--color--tertiary);
+  --color-quaternary: var(--wp--preset--color--quaternary);
 }

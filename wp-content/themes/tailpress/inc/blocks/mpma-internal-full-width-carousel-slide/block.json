@@ -1,0 +1,67 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "tailpress/mpma-internal-full-width-carousel-slide",
+  "title": "MPMA Internal Carousel Slide",
+  "category": "mpma-custom",
+  "icon": "format-image",
+  "description": "Slide container for the MPMA Internal Carousel.",
+  "keywords": ["slide", "carousel", "internal"],
+  "textdomain": "tailpress",
+  "parent": ["tailpress/mpma-internal-full-width-carousel"],
+  "attributes": {
+    "navLabel": {
+      "type": "string",
+      "default": ""
+    },
+    "seedVariation": {
+      "type": "string",
+      "default": ""
+    },
+    "isCustomized": {
+      "type": "boolean",
+      "default": false
+    },
+    "awardsPanelWidthColumns": {
+      "type": "number",
+      "default": 6
+    },
+    "awardsPanelVerticalAlignment": {
+      "type": "string",
+      "default": "top"
+    },
+    "awardsPanelHorizontalAlignment": {
+      "type": "string",
+      "default": "center"
+    },
+    "awardsShowBullets": {
+      "type": "boolean",
+      "default": false
+    },
+    "awardsShowDividers": {
+      "type": "boolean",
+      "default": true
+    },
+    "awardsPanelPaddingTop": {
+      "type": "string",
+      "default": "2rem"
+    },
+    "awardsPanelPaddingRight": {
+      "type": "string",
+      "default": "1.5rem"
+    },
+    "awardsPanelPaddingBottom": {
+      "type": "string",
+      "default": "2rem"
+    },
+    "awardsPanelPaddingLeft": {
+      "type": "string",
+      "default": "1.5rem"
+    }
+  },
+  "supports": {
+    "html": false,
+    "reusable": false
+  },
+  "editorScript": "file:./editor.js"
+}

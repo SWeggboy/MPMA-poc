@@ -8,14 +8,13 @@
         </main>
 
         <?php do_action('tailpress_content_end'); ?>
-    </div>
 
     <?php do_action('tailpress_content_after'); ?>
 
-    <footer id="colophon" class="bg-primary mt-12" role="contentinfo">
+    <footer id="colophon" class="bg-primary mt-12 md:mt-0" role="contentinfo">
         <?php do_action('tailpress_footer'); ?>
-        <div class="bg-secondary">
-          <div class="container flex flex-col md:flex-row items-center justify-center gap-6 mx-auto pt-4 text-center">
+        <div class="bg-quaternary">
+          <div class="container grid grid-cols-2 justify-items-center content-center gap-2 md:flex md:flex-row items-center justify-center md:gap-6 mx-auto pt-4 text-center">
               <?php if (is_active_sidebar('footer-logos')) : ?>
                   <?php dynamic_sidebar('footer-logos'); ?>
               <?php endif; ?>

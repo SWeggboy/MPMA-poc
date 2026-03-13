@@ -2,6 +2,10 @@
  * Testimonial Carousel Block - Editor Script
  */
 (function(wp) {
+    if (!wp || !wp.blocks || !wp.blockEditor || !wp.components || !wp.i18n || !wp.element) {
+        return;
+    }
+
     const { registerBlockType } = wp.blocks;
     const { InspectorControls, useBlockProps } = wp.blockEditor;
     const { Button, PanelBody, ToggleControl, RangeControl } = wp.components;

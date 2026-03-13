@@ -1,0 +1,214 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "tailpress/mpma-internal-card",
+  "title": "MPMA Internal Card",
+  "category": "mpma-custom",
+  "icon": "cover-image",
+  "description": "Simplified flippable internal card with front and back content, crossfade transition, and configurable panel styling.",
+  "keywords": ["card", "internal card", "flip card", "panel"],
+  "textdomain": "tailpress",
+  "attributes": {
+    "frontTitle": {
+      "type": "string",
+      "default": "Card Heading"
+    },
+    "frontBody": {
+      "type": "string",
+      "default": "Add the front-side copy here."
+    },
+    "frontButtonText": {
+      "type": "string",
+      "default": "Learn More"
+    },
+    "frontButtonUrl": {
+      "type": "string",
+      "default": ""
+    },
+    "frontBackgroundImage": {
+      "type": "string",
+      "default": ""
+    },
+    "frontBackgroundImageId": {
+      "type": "number",
+      "default": 0
+    },
+    "frontBackgroundColor": {
+      "type": "string",
+      "default": "#ffffff"
+    },
+    "frontTitleColor": {
+      "type": "string",
+      "default": "#000000"
+    },
+    "frontBodyColor": {
+      "type": "string",
+      "default": "#000000"
+    },
+    "frontTitleFontSize": {
+      "type": "string",
+      "default": ""
+    },
+    "frontBodyFontSize": {
+      "type": "string",
+      "default": ""
+    },
+    "frontVerticalAlignment": {
+      "type": "string",
+      "default": ""
+    },
+    "frontHorizontalAlignment": {
+      "type": "string",
+      "default": ""
+    },
+    "frontButtonTreatment": {
+      "type": "string",
+      "default": ""
+    },
+    "backTitle": {
+      "type": "string",
+      "default": "Card Back"
+    },
+    "backBody": {
+      "type": "string",
+      "default": "Add the reverse-side copy here."
+    },
+    "backButtonText": {
+      "type": "string",
+      "default": "Learn More"
+    },
+    "backButtonUrl": {
+      "type": "string",
+      "default": ""
+    },
+    "backBackgroundImage": {
+      "type": "string",
+      "default": ""
+    },
+    "backBackgroundImageId": {
+      "type": "number",
+      "default": 0
+    },
+    "backBackgroundColor": {
+      "type": "string",
+      "default": "#ffffff"
+    },
+    "backTitleColor": {
+      "type": "string",
+      "default": "#000000"
+    },
+    "backBodyColor": {
+      "type": "string",
+      "default": "#000000"
+    },
+    "backTitleFontSize": {
+      "type": "string",
+      "default": ""
+    },
+    "backBodyFontSize": {
+      "type": "string",
+      "default": ""
+    },
+    "backVerticalAlignment": {
+      "type": "string",
+      "default": ""
+    },
+    "backHorizontalAlignment": {
+      "type": "string",
+      "default": ""
+    },
+    "backButtonTreatment": {
+      "type": "string",
+      "default": ""
+    },
+    "widthColumns": {
+      "type": "number",
+      "default": 4
+    },
+    "photoOnly": {
+      "type": "boolean",
+      "default": false
+    },
+    "frontPhotoOnly": {
+      "type": "boolean",
+      "default": false
+    },
+    "backPhotoOnly": {
+      "type": "boolean",
+      "default": false
+    },
+    "cardAlignment": {
+      "type": "string",
+      "default": "center"
+    },
+    "cardHeight": {
+      "type": "string",
+      "default": "455px"
+    },
+    "borderRadius": {
+      "type": "string",
+      "default": "1.5rem"
+    },
+    "contentPaddingTop": {
+      "type": "string",
+      "default": "1.75rem"
+    },
+    "contentPaddingRight": {
+      "type": "string",
+      "default": "1.75rem"
+    },
+    "contentPaddingBottom": {
+      "type": "string",
+      "default": "1.75rem"
+    },
+    "contentPaddingLeft": {
+      "type": "string",
+      "default": "1.75rem"
+    },
+    "titleFontSize": {
+      "type": "string",
+      "default": "1.5rem"
+    },
+    "bodyFontSize": {
+      "type": "string",
+      "default": "1rem"
+    },
+    "dropShadow": {
+      "type": "boolean",
+      "default": true
+    },
+    "flippable": {
+      "type": "boolean",
+      "default": false
+    },
+    "animationSpeed": {
+      "type": "number",
+      "default": 400
+    },
+    "verticalAlignment": {
+      "type": "string",
+      "default": "top"
+    },
+    "horizontalAlignment": {
+      "type": "string",
+      "default": "center"
+    },
+    "buttonTreatment": {
+      "type": "string",
+      "default": "primary"
+    },
+    "stretchContent": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "supports": {
+    "anchor": true,
+    "html": false,
+    "spacing": {
+      "margin": true
+    }
+  },
+  "editorScript": "file:./editor.js",
+  "render": "file:./render.php"
+}
