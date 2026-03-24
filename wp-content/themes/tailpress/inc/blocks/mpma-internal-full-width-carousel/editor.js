@@ -49,13 +49,32 @@
         return classes.join(' ');
     };
 
+    const getAvailableColumns = function(clientId) {
+        const blockEditorStore = wp.data.select('core/block-editor');
+        const directParentId = blockEditorStore.getBlockRootClientId(clientId);
+        const rowParentId = directParentId ? blockEditorStore.getBlockRootClientId(directParentId) : '';
+        const layoutParentId = rowParentId ? blockEditorStore.getBlockRootClientId(rowParentId) : '';
+        const layoutBlock = layoutParentId ? blockEditorStore.getBlock(layoutParentId) : null;
+
+        if (!layoutBlock || layoutBlock.name !== 'tailpress/mpma-internal-layout') {
+            return 12;
+        }
+
+        const attributes = layoutBlock.attributes || {};
+        const sidebarEnabled = attributes.sidebarEnabled !== false;
+        const resolvedColumns = Number(attributes.contentColumns) || (sidebarEnabled ? 8 : 12);
+
+        return Math.min(12, Math.max(4, resolvedColumns));
+    };
+
     const getAwardsPaddingValue = function(value, fallback) {
         const normalizedValue = String(value || '').trim();
         return normalizedValue || fallback;
     };
 
-    const buildSlideTemplate = function(navLabel, variation, slideAttributes) {
+    const buildSlideTemplate = function(navLabel, variation, slideAttributes, parentMaxColumns) {
         const safeNavLabel = String(navLabel || '').trim();
+        const safeParentMaxColumns = Math.min(12, Math.max(4, Number(parentMaxColumns) || 12));
         const awardsWidthColumns = Math.max(1, Math.min(12, Number(slideAttributes && slideAttributes.awardsPanelWidthColumns) || 6));
         const awardsVerticalAlignment = ['top', 'center', 'bottom'].includes(slideAttributes && slideAttributes.awardsPanelVerticalAlignment)
             ? slideAttributes.awardsPanelVerticalAlignment
@@ -71,12 +90,17 @@
         const awardsPaddingLeft = getAwardsPaddingValue(slideAttributes && slideAttributes.awardsPanelPaddingLeft, '1.5rem');
 
         if (variation === 'awards') {
+            const awardsContentColumns = Math.min(
+                safeParentMaxColumns,
+                Math.max(4, awardsWidthColumns)
+            );
+
             return [
                 ['tailpress/mpma-internal-layout', {
                     fullWidth: false,
                     sidebarEnabled: false,
-                    contentColumns: 12,
-                    contentPosition: 'center'
+                    contentColumns: awardsContentColumns,
+                    contentPosition: awardsHorizontalAlignment
                 }, [
                     ['tailpress/mpma-internal-layout-row', { columnCount: 1 }, [
                         ['tailpress/mpma-internal-layout-column', {
@@ -117,7 +141,7 @@
             ['tailpress/mpma-internal-layout', {
                 fullWidth: false,
                 sidebarEnabled: false,
-                contentColumns: 10,
+                contentColumns: Math.min(safeParentMaxColumns, 10),
                 contentPosition: 'center'
             }, [
                 ['tailpress/mpma-internal-layout-row', { columnCount: 1 }, [
@@ -241,6 +265,7 @@
             const navActiveColor = String(attributes.navActiveColor || NAV_COLOR_PRESETS.default.active);
             const navInactiveColor = String(attributes.navInactiveColor || NAV_COLOR_PRESETS.default.inactive);
             const animationSpeed = Math.max(150, Number(attributes.animationSpeed) || 400);
+            const equalPanelHeights = attributes.equalPanelHeights !== false;
             const rawViewportLabels = Math.max(1, Number(attributes.navViewportLabels) || 4);
             const slideBlocks = useSelect(function(select) {
                 return select('core/block-editor').getBlocks(clientId);
@@ -248,6 +273,9 @@
             const slideCount = slideBlocks.filter(function(block) {
                 return block && block.name === 'tailpress/mpma-internal-full-width-carousel-slide';
             }).length;
+            const parentMaxColumns = useSelect(function() {
+                return getAvailableColumns(clientId);
+            }, [clientId]);
             const enableNavOverflow = attributes.enableNavOverflow !== false;
             const navViewportLabels = Math.max(1, Math.min(Math.max(1, slideCount || 1), rawViewportLabels));
             const navLabels = slideBlocks.map(function(block, index) {
@@ -295,7 +323,7 @@
 
                                     wp.data.dispatch('core/block-editor').replaceInnerBlocks(
                                         block.clientId,
-                                        createBlocksFromTemplate(buildSlideTemplate(nextNavLabel, nextVariation, slideAttributes)),
+                                        createBlocksFromTemplate(buildSlideTemplate(nextNavLabel, nextVariation, slideAttributes, parentMaxColumns)),
                                         false
                                     );
                                     wp.data.dispatch('core/block-editor').updateBlockAttributes(block.clientId, {
@@ -316,6 +344,16 @@
                             min: 150,
                             max: 1500,
                             step: 50
+                        }),
+                        el(ToggleControl, {
+                            label: __('Match tallest slide height', 'tailpress'),
+                            checked: equalPanelHeights,
+                            onChange: function(value) {
+                                setAttributes({ equalPanelHeights: !!value });
+                            },
+                            help: equalPanelHeights
+                                ? __('Carousel keeps the height of the tallest slide to prevent layout jumping.', 'tailpress')
+                                : __('Carousel height follows the currently active slide.', 'tailpress')
                         })
                     ),
                     el(
@@ -486,6 +524,16 @@
                                 lineHeight: 1.4
                             }
                         }, animationSpeed + 'ms'),
+                        el('span', {
+                            style: {
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                padding: '0.125rem 0.5rem',
+                                backgroundColor: 'rgba(15, 23, 42, 0.06)',
+                                fontSize: '0.75rem',
+                                lineHeight: 1.4
+                            }
+                        }, equalPanelHeights ? __('Equal height on', 'tailpress') : __('Equal height off', 'tailpress')),
                         el('span', {
                             style: {
                                 display: 'inline-flex',

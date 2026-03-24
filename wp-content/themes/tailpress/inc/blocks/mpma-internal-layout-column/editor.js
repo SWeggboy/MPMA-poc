@@ -128,7 +128,7 @@
                         }, __('This row is currently using ' + totalWidth + ' of ' + maxGridColumns + ' columns.', 'tailpress'))
                     )
                 ),
-                    el('div', blockProps,
+                el('div', blockProps,
                     el('div', { className: 'mpma-internal-layout__column-inner' },
                         el(InnerBlocks, {
                             template: [

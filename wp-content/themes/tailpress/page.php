@@ -79,6 +79,7 @@ $outer_container_spacing_class = ($show_page_title_background || $has_hero_carou
     : 'mt-14 mb-0';
 
 $show_sidebar = !is_front_page() && is_active_sidebar('sidebar-1') && $show_sidebar_by_meta;
+$page_title_hero_title_style = 'margin:0;color:#ffffff;font-family:var(--font-montserrat);font-size:3.75rem;font-weight:700;line-height:1.1;text-align:center;';
 ?>
 
 <?php if (have_posts()): ?>
@@ -96,9 +97,9 @@ $show_sidebar = !is_front_page() && is_active_sidebar('sidebar-1') && $show_side
                 ></div>
                 <div class="page-title-hero__inner container  relative z-10">
                     <?php if ($page_title_bg_use_h1): ?>
-                        <h1 class="page-title-hero__title"><?php the_title(); ?></h1>
+                        <h1 class="page-title-hero__title" style="<?php echo esc_attr($page_title_hero_title_style); ?>"><?php the_title(); ?></h1>
                     <?php else: ?>
-                        <p class="page-title-hero__title page-title-hero__title--display"><?php the_title(); ?></p>
+                        <h2 class="page-title-hero__title" style="<?php echo esc_attr($page_title_hero_title_style); ?>"><?php the_title(); ?></h2>
                     <?php endif; ?>
                     <?php if ('' !== $page_title_bg_subtitle): ?>
                         <p class="page-title-hero__subtitle"><?php echo esc_html($page_title_bg_subtitle); ?></p>

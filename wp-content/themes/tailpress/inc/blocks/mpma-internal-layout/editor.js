@@ -46,6 +46,7 @@
                 usePageTitleOverlay,
                 minHeight,
                 sidebarEnabled,
+                stretchToSidebar,
                 contentColumns,
                 contentPosition,
                 verticalContentPosition
@@ -74,9 +75,17 @@
 
             const blockProps = useBlockProps({
                 className: 'mpma-internal-layout-editor'
+                    + (stretchToSidebar ? ' mpma-internal-layout-editor--stretch-content' : '')
+                    + (sidebarEnabled && stretchToSidebar ? ' mpma-internal-layout-editor--stretch-sidebar' : '')
+                    + (!sidebarEnabled ? ' mpma-internal-layout-editor--horizontal-' + resolvedContentPosition : '')
                     + (fullWidth ? ' mpma-internal-layout-editor--full-width alignfull' : ''),
                 style: {
                     minHeight: minHeight || undefined,
+                    '--mpma-internal-layout-content-start': String(leftSpacerColumns + 1),
+                    '--mpma-internal-layout-content-span': String(safeColumns),
+                    '--mpma-internal-layout-row-columns': String(safeColumns),
+                    '--mpma-internal-layout-spacer-start': rightSpacerColumns > 0 ? String(leftSpacerColumns + safeColumns + 1) : undefined,
+                    '--mpma-internal-layout-spacer-span': rightSpacerColumns > 0 ? String(rightSpacerColumns) : undefined,
                     backgroundImage: backgroundImage ? 'url("' + backgroundImage + '")' : undefined,
                     backgroundSize: backgroundImage ? 'cover' : undefined,
                     backgroundPosition: backgroundImage ? 'center' : undefined,
@@ -92,6 +101,41 @@
                 gap: '1.5rem',
                 alignItems: 'start'
             };
+            const summaryParts = [];
+
+            summaryParts.push(sidebarEnabled
+                ? __('Sidebar ', 'tailpress') + safeColumns + '/4'
+                : __('Content ', 'tailpress') + safeColumns + '/12');
+
+            if (!sidebarEnabled) {
+                summaryParts.push(({
+                    left: __('Left', 'tailpress'),
+                    center: __('Center', 'tailpress'),
+                    right: __('Right', 'tailpress')
+                }[resolvedContentPosition] || __('Center', 'tailpress')) + ' ' + __('horiz', 'tailpress'));
+            }
+
+            summaryParts.push(({
+                top: __('Top', 'tailpress'),
+                center: __('Middle', 'tailpress'),
+                bottom: __('Bottom', 'tailpress')
+            }[resolvedVerticalContentPosition] || __('Top', 'tailpress')) + ' ' + __('vert', 'tailpress'));
+
+            if (stretchToSidebar) {
+                summaryParts.push(__('Stretch', 'tailpress'));
+            }
+
+            if (fullWidth) {
+                summaryParts.push(__('Full bleed', 'tailpress'));
+            }
+
+            if (backgroundImage) {
+                summaryParts.push(__('BG image', 'tailpress'));
+            }
+
+            if (minHeight) {
+                summaryParts.push(__('Min ', 'tailpress') + minHeight);
+            }
 
             return el(Fragment, null,
                 el(InspectorControls, null,
@@ -116,6 +160,14 @@
                                 });
                             },
                             help: __('Keeps the content in the left content column and leaves the right 4 columns empty on desktop.', 'tailpress')
+                        }),
+                        el(ToggleControl, {
+                            label: __('Stretch content vertically', 'tailpress'),
+                            checked: !!stretchToSidebar,
+                            onChange: function(value) {
+                                setAttributes({ stretchToSidebar: !!value });
+                            },
+                            help: __('Stretches the layout content so the last row can align with the bottom when extra height is available.', 'tailpress')
                         }),
                         el(SelectControl, {
                             label: __('Content columns', 'tailpress'),
@@ -198,12 +250,19 @@
                             }
                         })
                     ),
+                    el('div', {
+                            className: 'layout-shell',
+                            style: {
+                                position: 'relative',
+                                zIndex: 20
+                            }
+                        },
                         el('div', {
                             className: 'mpma-internal-layout-editor__label',
                             style: {
                                 position: 'relative',
-                                zIndex: 20,
-                                display: 'inline-flex',
+                                display: 'flex',
+                                flexWrap: 'wrap',
                                 alignItems: 'center',
                                 gap: '0.5rem',
                                 margin: '0 0 1rem',
@@ -212,14 +271,32 @@
                                 borderRadius: '0',
                                 backgroundColor: 'rgba(255,255,255,0.92)',
                                 color: '#1f2937',
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                letterSpacing: '0.04em',
-                                textTransform: 'uppercase',
                                 boxShadow: '0 1px 2px rgba(15, 23, 42, 0.08)'
                             }
                         },
-                        __('MPMA Internal Layout', 'tailpress')
+                        el('span', {
+                            style: {
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                letterSpacing: '0.04em',
+                                lineHeight: 1.4,
+                                textTransform: 'uppercase'
+                            }
+                        }, __('MPMA Internal Layout', 'tailpress')),
+                        summaryParts.map(function(part, index) {
+                            return el('span', {
+                                key: index,
+                                style: {
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    padding: '0.125rem 0.5rem',
+                                    backgroundColor: 'rgba(15, 23, 42, 0.06)',
+                                    fontSize: '0.75rem',
+                                    lineHeight: 1.4
+                                }
+                            }, part);
+                        })
+                    ),
                     ),
                     el('div', {
                             className: 'layout-shell',
@@ -241,6 +318,7 @@
                                 }
                             }),
                             el('div', {
+                                    className: 'mpma-internal-layout-editor__content',
                                     style: {
                                         gridColumn: (leftSpacerColumns + 1) + ' / span ' + safeColumns,
                                         alignSelf: ({

@@ -12,6 +12,7 @@ $background_image_id = isset( $attributes['backgroundImageId'] ) && is_numeric( 
 $use_page_title_overlay = ! empty( $attributes['usePageTitleOverlay'] );
 $min_height = trim( sanitize_text_field( (string) ( $attributes['minHeight'] ?? '' ) ) );
 $sidebar_enabled = array_key_exists( 'sidebarEnabled', $attributes ) ? (bool) $attributes['sidebarEnabled'] : true;
+$stretch_to_sidebar = ! empty( $attributes['stretchToSidebar'] );
 $content_columns = isset( $attributes['contentColumns'] ) ? (int) $attributes['contentColumns'] : ( $sidebar_enabled ? 8 : 12 );
 $content_position = sanitize_key( $attributes['contentPosition'] ?? 'center' );
 $vertical_content_position = sanitize_key( $attributes['verticalContentPosition'] ?? 'top' );
@@ -72,8 +73,17 @@ if ( $full_width ) {
 if ( '' !== $background_image ) {
 	$wrapper_classes .= ' mpma-internal-layout--has-bg';
 }
+if ( $stretch_to_sidebar ) {
+	$wrapper_classes .= ' mpma-internal-layout--stretch-content';
+}
 if ( $sidebar_enabled && $right_spacer > 0 ) {
 	$wrapper_classes .= ' mpma-internal-layout--has-sidebar';
+	if ( $stretch_to_sidebar ) {
+		$wrapper_classes .= ' mpma-internal-layout--stretch-sidebar';
+	}
+}
+if ( ! $sidebar_enabled && in_array( $content_position, array( 'left', 'center', 'right' ), true ) ) {
+	$wrapper_classes .= ' mpma-internal-layout--horizontal-' . $content_position;
 }
 if ( in_array( $vertical_content_position, array( 'top', 'center', 'bottom' ), true ) ) {
 	$wrapper_classes .= ' mpma-internal-layout--vertical-' . $vertical_content_position;

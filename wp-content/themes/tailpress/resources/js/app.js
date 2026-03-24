@@ -815,6 +815,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     carousels.forEach(function (carousel) {
+        const viewport = carousel.querySelector('[data-full-width-carousel-viewport]');
         const track = carousel.querySelector('[data-full-width-carousel-track]');
         const slides = Array.from(carousel.querySelectorAll('[data-full-width-carousel-slide]'));
         const navButtons = Array.from(carousel.querySelectorAll('[data-full-width-carousel-nav]'));
@@ -823,6 +824,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const navViewport = carousel.querySelector('[data-full-width-carousel-nav-viewport]');
         const navTrack = carousel.querySelector('[data-full-width-carousel-nav-track]');
         const computedSpeed = Number.parseFloat(getComputedStyle(carousel).getPropertyValue('--mpma-internal-full-width-carousel-speed')) || 400;
+        const equalPanelHeights = carousel.dataset.equalPanelHeights !== '0';
         const navOverflowEnabled = carousel.dataset.navOverflow !== '0';
         const visibleLabelCount = Math.max(1, Math.min(navButtons.length || 1, Number.parseInt(carousel.dataset.navVisibleLabels || '4', 10) || 4));
         const navContainer = carousel.querySelector('.mpma-internal-full-width-carousel__nav');
@@ -830,7 +832,7 @@ document.addEventListener('DOMContentLoaded', function () {
         let currentIndex = isAwards ? Math.max(0, slides.length - 1) : 0;
         let cleanupTimer = null;
 
-        if (!track || slides.length < 1) {
+        if (!viewport || !track || slides.length < 1) {
             return;
         }
 
@@ -858,6 +860,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const syncNavViewport = function () {
             if (!navOverflowEnabled || !navViewport || !navTrack || !navButtons.length || !navContainer) {
+                if (navContainer) {
+                    navContainer.style.width = '';
+                    navContainer.style.maxWidth = '';
+                }
+
                 if (navViewport) {
                     navViewport.style.width = '';
                     navViewport.style.maxWidth = '';
@@ -874,27 +881,33 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const trackStyles = window.getComputedStyle(navTrack);
             const navStyles = window.getComputedStyle(navContainer);
+            const navWrapper = navContainer.parentElement;
             const trackGap = Number.parseFloat(trackStyles.columnGap || trackStyles.gap || '0') || 0;
             const navGap = Number.parseFloat(navStyles.columnGap || navStyles.gap || '0') || 0;
+            const prevWidth = prevButton ? prevButton.offsetWidth : 0;
+            const nextWidth = nextButton ? nextButton.offsetWidth : 0;
             const widestLabel = navButtons.reduce(function (maxWidth, button) {
                 return Math.max(maxWidth, button.offsetWidth);
             }, 0);
             const coreWidth = (widestLabel * visibleLabelCount) + (trackGap * Math.max(0, visibleLabelCount - 1));
             const peekBuffer = coreWidth * 0.2;
             const desiredWidth = coreWidth + (peekBuffer * 2);
+            const arrowAllowance = prevWidth + nextWidth + (navGap * 2);
+            const availableNavWidth = Math.max(0, (navWrapper ? navWrapper.clientWidth : navContainer.clientWidth) || 0);
             const availableWidth = Math.max(
                 0,
-                navContainer.clientWidth
-                - (prevButton ? prevButton.offsetWidth : 0)
-                - (nextButton ? nextButton.offsetWidth : 0)
-                - (navGap * 2)
+                availableNavWidth - arrowAllowance
             );
-            const nextWidth = Math.min(desiredWidth, navTrack.scrollWidth, availableWidth || desiredWidth);
-            const edgePadding = Math.max(0, (nextWidth - widestLabel) / 2);
+            const nextViewportWidth = Math.min(desiredWidth, navTrack.scrollWidth, availableWidth || desiredWidth);
+            const totalNavWidth = Math.min(availableNavWidth || (nextViewportWidth + arrowAllowance), nextViewportWidth + arrowAllowance);
+            const edgePadding = Math.max(0, (nextViewportWidth - widestLabel) / 2);
 
-            navViewport.style.width = nextWidth > 0 ? nextWidth + 'px' : '';
+            navContainer.style.width = totalNavWidth > 0 ? totalNavWidth + 'px' : '';
+            navContainer.style.maxWidth = '100%';
+
+            navViewport.style.width = nextViewportWidth > 0 ? nextViewportWidth + 'px' : '';
             navViewport.style.maxWidth = '100%';
-            navViewport.style.setProperty('--mpma-internal-full-width-carousel-nav-viewport-width', nextWidth > 0 ? nextWidth + 'px' : '');
+            navViewport.style.setProperty('--mpma-internal-full-width-carousel-nav-viewport-width', nextViewportWidth > 0 ? nextViewportWidth + 'px' : '');
             navTrack.style.paddingLeft = edgePadding > 0 ? edgePadding + 'px' : '';
             navTrack.style.paddingRight = edgePadding > 0 ? edgePadding + 'px' : '';
         };
@@ -934,23 +947,92 @@ document.addEventListener('DOMContentLoaded', function () {
             navTrack.style.transform = 'translateX(' + (-nextOffset) + 'px)';
         };
 
-        const syncHeight = function (index, immediate) {
-            const targetSlide = slides[index];
-
-            if (!targetSlide) {
-                return;
+        const getSlideHeight = function (slide) {
+            if (!slide) {
+                return 0;
             }
 
-            const nextHeight = targetSlide.offsetHeight;
+            slide.classList.add('is-measuring');
+            const slideInner = slide.querySelector('.mpma-internal-full-width-carousel__slide-inner');
+            const measuredNode = slideInner || slide;
+            const rectHeight = measuredNode.getBoundingClientRect().height || 0;
+            const offsetHeight = measuredNode.offsetHeight || 0;
+            const scrollHeight = measuredNode.scrollHeight || 0;
+            slide.classList.remove('is-measuring');
+
+            return Math.max(rectHeight, offsetHeight, scrollHeight);
+        };
+
+        const getTrackHeight = function (index) {
+            if (!equalPanelHeights) {
+                return getSlideHeight(slides[normalizeIndex(index)]);
+            }
+
+            return slides.reduce(function (maxHeight, slide) {
+                return Math.max(maxHeight, getSlideHeight(slide));
+            }, 0);
+        };
+
+        const syncHeight = function (index, immediate) {
+            if (!equalPanelHeights) {
+                track.style.height = '';
+                viewport.style.height = '';
+                viewport.style.minHeight = '';
+            }
+
+            const nextHeight = getTrackHeight(index);
+            const applyHeight = function () {
+                track.style.height = nextHeight + 'px';
+                viewport.style.height = nextHeight + 'px';
+
+                if (equalPanelHeights) {
+                    viewport.style.minHeight = nextHeight + 'px';
+                } else {
+                    viewport.style.minHeight = '';
+                }
+            };
 
             if (immediate) {
-                track.style.height = nextHeight + 'px';
+                applyHeight();
                 return;
             }
 
             requestAnimationFrame(function () {
-                track.style.height = nextHeight + 'px';
+                applyHeight();
             });
+        };
+
+        let scheduledSyncFrame = null;
+        let scheduledSyncTimeout = null;
+
+        const scheduleLayoutSync = function () {
+            if (scheduledSyncFrame) {
+                window.cancelAnimationFrame(scheduledSyncFrame);
+            }
+
+            if (scheduledSyncTimeout) {
+                window.clearTimeout(scheduledSyncTimeout);
+            }
+
+            syncNavViewport();
+
+            scheduledSyncFrame = window.requestAnimationFrame(function () {
+                syncNavPosition(currentIndex, true);
+                syncHeight(currentIndex, true);
+
+                scheduledSyncFrame = window.requestAnimationFrame(function () {
+                    syncNavPosition(currentIndex, true);
+                    syncHeight(currentIndex, true);
+                    scheduledSyncFrame = null;
+                });
+            });
+
+            scheduledSyncTimeout = window.setTimeout(function () {
+                syncNavViewport();
+                syncNavPosition(currentIndex, true);
+                syncHeight(currentIndex, true);
+                scheduledSyncTimeout = null;
+            }, computedSpeed);
         };
 
         const activateSlide = function (index, immediate) {
@@ -1001,6 +1083,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         slide.setAttribute('aria-hidden', 'true');
                     }
                 });
+
+                syncHeight(currentIndex, true);
             }, computedSpeed);
         };
 
@@ -1022,19 +1106,38 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
+        if (typeof window.ResizeObserver === 'function') {
+            const resizeObserver = new window.ResizeObserver(function () {
+                scheduleLayoutSync();
+            });
+
+            resizeObserver.observe(carousel);
+            slides.forEach(function (slide) {
+                resizeObserver.observe(slide);
+
+                const slideInner = slide.querySelector('.mpma-internal-full-width-carousel__slide-inner');
+
+                if (slideInner) {
+                    resizeObserver.observe(slideInner);
+                }
+            });
+        }
+
         window.addEventListener('resize', function () {
-            syncNavViewport();
-            syncNavPosition(currentIndex, true);
-            syncHeight(currentIndex, true);
+            scheduleLayoutSync();
         });
 
-        syncNavViewport();
         activateSlide(currentIndex, true);
+        scheduleLayoutSync();
 
         if (navOverflowEnabled) {
             window.requestAnimationFrame(function () {
                 carousel.classList.add('is-nav-ready');
             });
         }
+
+        window.addEventListener('load', function () {
+            scheduleLayoutSync();
+        }, { once: true });
     });
 });

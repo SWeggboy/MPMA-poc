@@ -11,6 +11,7 @@ $animation_speed = isset( $attributes['animationSpeed'] ) ? (int) $attributes['a
 $animation_speed = max( 150, min( 3000, $animation_speed ) );
 $variation = isset( $attributes['variation'] ) && 'awards' === $attributes['variation'] ? 'awards' : 'default';
 $enable_nav_overflow = ! isset( $attributes['enableNavOverflow'] ) || ! empty( $attributes['enableNavOverflow'] );
+$equal_panel_heights = ! isset( $attributes['equalPanelHeights'] ) || ! empty( $attributes['equalPanelHeights'] );
 $nav_active_color = sanitize_hex_color( $attributes['navActiveColor'] ?? '#000000' );
 $nav_inactive_color = sanitize_hex_color( $attributes['navInactiveColor'] ?? '#747474' );
 
@@ -72,7 +73,7 @@ $nav_viewport_labels = isset( $attributes['navViewportLabels'] ) ? (int) $attrib
 $nav_viewport_labels = max( 1, min( count( $slides ), $nav_viewport_labels ) );
 ?>
 
-<section <?php echo $wrapper_attributes; ?> data-mpma-internal-full-width-carousel data-nav-overflow="<?php echo $enable_nav_overflow ? '1' : '0'; ?>" data-nav-visible-labels="<?php echo esc_attr( (string) $nav_viewport_labels ); ?>" id="<?php echo esc_attr( $block_id ); ?>">
+<section <?php echo $wrapper_attributes; ?> data-mpma-internal-full-width-carousel data-nav-overflow="<?php echo $enable_nav_overflow ? '1' : '0'; ?>" data-nav-visible-labels="<?php echo esc_attr( (string) $nav_viewport_labels ); ?>" data-equal-panel-heights="<?php echo $equal_panel_heights ? '1' : '0'; ?>" id="<?php echo esc_attr( $block_id ); ?>">
 	<div class="layout-shell mpma-internal-full-width-carousel__nav-shell">
 		<div class="layout-grid">
 			<div class="<?php echo esc_attr( $nav_column_classes ); ?>">

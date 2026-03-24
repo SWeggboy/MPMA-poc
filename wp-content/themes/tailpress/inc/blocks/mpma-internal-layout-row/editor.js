@@ -170,41 +170,7 @@
                         })
                     )
                 ),
-                el(Fragment, null,
-                    el('div', {
-                        className: 'mpma-internal-layout-row-editor__label',
-                        onMouseDown: function(event) {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            wp.data.dispatch('core/block-editor').selectBlock(clientId);
-                        },
-                        onClick: function(event) {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            wp.data.dispatch('core/block-editor').selectBlock(clientId);
-                        },
-                        style: {
-                            position: 'relative',
-                            zIndex: 20,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            margin: '0 0 1rem',
-                            padding: '0.5rem 0.75rem',
-                            border: '1px solid var(--color-accent-light)',
-                            borderRadius: '0',
-                            backgroundColor: 'rgba(255,255,255,0.92)',
-                            color: '#1f2937',
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            letterSpacing: '0.04em',
-                            textTransform: 'uppercase',
-                            boxShadow: '0 1px 2px rgba(15, 23, 42, 0.08)',
-                            cursor: 'pointer'
-                        }
-                    }, __('MPMA Internal Layout Row', 'tailpress')),
-                    el('div', innerBlocksProps)
-                )
+                el('div', innerBlocksProps)
             );
         },
 

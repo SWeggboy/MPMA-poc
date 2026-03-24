@@ -29,6 +29,25 @@
         return normalizedValue || fallback;
     };
 
+    const getAvailableColumns = function(clientId) {
+        const blockEditorStore = wp.data.select('core/block-editor');
+        const carouselParentId = blockEditorStore.getBlockRootClientId(clientId);
+        const directParentId = carouselParentId ? blockEditorStore.getBlockRootClientId(carouselParentId) : '';
+        const rowParentId = directParentId ? blockEditorStore.getBlockRootClientId(directParentId) : '';
+        const layoutParentId = rowParentId ? blockEditorStore.getBlockRootClientId(rowParentId) : '';
+        const layoutBlock = layoutParentId ? blockEditorStore.getBlock(layoutParentId) : null;
+
+        if (!layoutBlock || layoutBlock.name !== 'tailpress/mpma-internal-layout') {
+            return 12;
+        }
+
+        const attributes = layoutBlock.attributes || {};
+        const sidebarEnabled = attributes.sidebarEnabled !== false;
+        const resolvedColumns = Number(attributes.contentColumns) || (sidebarEnabled ? 8 : 12);
+
+        return Math.min(12, Math.max(4, resolvedColumns));
+    };
+
     const createBlocksFromTemplate = function(template) {
         return (template || []).map(function(item) {
             const name = item && item[0] ? item[0] : '';
@@ -116,7 +135,8 @@
             && String(listBlock.attributes.values || '') === '<li>' + __('Recognition item one', 'tailpress') + '</li><li>' + __('Recognition item two', 'tailpress') + '</li><li>' + __('Recognition item three', 'tailpress') + '</li>';
     };
 
-    const buildTemplate = function(navLabel, variation, awardsSettings) {
+    const buildTemplate = function(navLabel, variation, awardsSettings, parentMaxColumns) {
+        const safeParentMaxColumns = Math.min(12, Math.max(4, Number(parentMaxColumns) || 12));
         const awardsWidthColumns = Math.max(1, Math.min(12, Number(awardsSettings && awardsSettings.widthColumns) || 6));
         const awardsVerticalAlignment = awardsSettings && ['top', 'center', 'bottom'].includes(awardsSettings.verticalAlignment)
             ? awardsSettings.verticalAlignment
@@ -132,12 +152,15 @@
         const awardsPaddingLeft = getAwardsPaddingValue(awardsSettings && awardsSettings.paddingLeft, '1.5rem');
 
         if (variation === 'awards') {
+            const awardsContentColumns = Math.min(safeParentMaxColumns, Math.max(4, awardsWidthColumns));
+
             return [
                 ['tailpress/mpma-internal-layout', {
                     fullWidth: false,
                     sidebarEnabled: false,
-                    contentColumns: 12,
-                    contentPosition: 'center'
+                    stretchToSidebar: true,
+                    contentColumns: awardsContentColumns,
+                    contentPosition: awardsHorizontalAlignment
                 }, [
                     ['tailpress/mpma-internal-layout-row', { columnCount: 1 }, [
                         ['tailpress/mpma-internal-layout-column', {
@@ -178,7 +201,7 @@
             ['tailpress/mpma-internal-layout', {
                 fullWidth: false,
                 sidebarEnabled: false,
-                contentColumns: 10,
+                contentColumns: Math.min(safeParentMaxColumns, 10),
                 contentPosition: 'center'
             }, [
                 ['tailpress/mpma-internal-layout-row', { columnCount: 1 }, [
@@ -286,7 +309,7 @@
         });
     };
 
-    const syncAwardsPanelSettings = function(clientId, settings) {
+    const syncAwardsPanelSettings = function(clientId, settings, parentMaxColumns) {
         const blockEditorStore = wp.data.select('core/block-editor');
         const currentBlock = blockEditorStore.getBlock(clientId);
         const innerBlocks = currentBlock && Array.isArray(currentBlock.innerBlocks) ? currentBlock.innerBlocks : [];
@@ -308,15 +331,22 @@
 
         if (firstLayoutBlock && firstLayoutBlock.clientId) {
             const currentLayoutAttributes = firstLayoutBlock.attributes || {};
-            const layoutSidebarEnabled = currentLayoutAttributes.sidebarEnabled !== false;
-            const nextContentColumns = layoutSidebarEnabled
-                ? Math.min(8, Math.max(4, settings.widthColumns))
-                : Math.max(Number(currentLayoutAttributes.contentColumns) || 12, settings.widthColumns);
+            const nextContentColumns = Math.min(
+                Math.max(4, Number(parentMaxColumns) || 12),
+                Math.max(4, settings.widthColumns)
+            );
+            const nextLayoutAttributes = {};
 
             if ((Number(currentLayoutAttributes.contentColumns) || 0) !== nextContentColumns) {
-                wp.data.dispatch('core/block-editor').updateBlockAttributes(firstLayoutBlock.clientId, {
-                    contentColumns: nextContentColumns
-                });
+                nextLayoutAttributes.contentColumns = nextContentColumns;
+            }
+
+            if ((currentLayoutAttributes.contentPosition || 'center') !== settings.horizontalAlignment) {
+                nextLayoutAttributes.contentPosition = settings.horizontalAlignment;
+            }
+
+            if (Object.keys(nextLayoutAttributes).length) {
+                wp.data.dispatch('core/block-editor').updateBlockAttributes(firstLayoutBlock.clientId, nextLayoutAttributes);
             }
         }
 
@@ -381,6 +411,29 @@
         }
     };
 
+    const syncNestedLayoutBounds = function(clientId, parentMaxColumns) {
+        const blockEditorStore = wp.data.select('core/block-editor');
+        const currentBlock = blockEditorStore.getBlock(clientId);
+        const innerBlocks = currentBlock && Array.isArray(currentBlock.innerBlocks) ? currentBlock.innerBlocks : [];
+        const firstLayoutBlock = findFirstBlock(innerBlocks, function(block) {
+            return block.name === 'tailpress/mpma-internal-layout';
+        });
+
+        if (!firstLayoutBlock || !firstLayoutBlock.clientId) {
+            return;
+        }
+
+        const currentLayoutAttributes = firstLayoutBlock.attributes || {};
+        const currentContentColumns = Number(currentLayoutAttributes.contentColumns) || 12;
+        const nextContentColumns = Math.min(Math.max(4, Number(parentMaxColumns) || 12), currentContentColumns);
+
+        if (currentContentColumns !== nextContentColumns) {
+            wp.data.dispatch('core/block-editor').updateBlockAttributes(firstLayoutBlock.clientId, {
+                contentColumns: nextContentColumns
+            });
+        }
+    };
+
     registerBlockType('tailpress/mpma-internal-full-width-carousel-slide', {
         edit: function(props) {
             const { attributes, setAttributes, clientId, isSelected } = props;
@@ -405,17 +458,13 @@
                 const rootClientId = select('core/block-editor').getBlockRootClientId(clientId);
                 const parentBlock = rootClientId ? blockEditor.getBlock(rootClientId) : null;
                 const innerBlocks = blockEditor.getBlocks(clientId) || [];
-                const layoutBlock = findFirstBlock(innerBlocks, function(block) {
-                    return block.name === 'tailpress/mpma-internal-layout';
-                });
-                const layoutAttributes = layoutBlock && layoutBlock.attributes ? layoutBlock.attributes : {};
-                const layoutSidebarEnabled = layoutAttributes.sidebarEnabled !== false;
-                const layoutMaxColumns = layoutSidebarEnabled ? 8 : 12;
+                const parentMaxColumns = getAvailableColumns(clientId);
 
                 return {
                     parentVariation: parentBlock && parentBlock.attributes && parentBlock.attributes.variation === 'awards' ? 'awards' : 'default',
                     hasInnerBlocks: innerBlocks.length > 0,
-                    awardsPanelMaxColumns: Math.max(4, Math.min(12, layoutMaxColumns)),
+                    awardsPanelMaxColumns: Math.max(4, Math.min(12, parentMaxColumns)),
+                    parentMaxColumns: Math.max(4, Math.min(12, parentMaxColumns)),
                     innerBlocks: innerBlocks
                 };
             }, [clientId]);
@@ -423,6 +472,7 @@
             const hasInnerBlocks = editorState.hasInnerBlocks;
             const currentInnerBlocks = Array.isArray(editorState.innerBlocks) ? editorState.innerBlocks : [];
             const awardsPanelMaxColumns = Math.max(1, editorState.awardsPanelMaxColumns || 6);
+            const parentMaxColumns = Math.max(4, editorState.parentMaxColumns || 12);
             const safeAwardsPanelWidthColumns = Math.max(1, Math.min(awardsPanelMaxColumns, awardsPanelWidthColumns));
             const awardsSettings = {
                 widthColumns: safeAwardsPanelWidthColumns,
@@ -443,7 +493,7 @@
                     className: 'mpma-internal-full-width-carousel-slide-editor__inner'
                 },
                 {
-                    template: hasInnerBlocks ? undefined : buildTemplate(navLabel, parentVariation, awardsSettings),
+                    template: hasInnerBlocks ? undefined : buildTemplate(navLabel, parentVariation, awardsSettings, parentMaxColumns),
                     templateLock: false,
                     renderAppender: isSelected ? InnerBlocks.ButtonBlockAppender : false
                 }
@@ -486,15 +536,24 @@
             ]);
 
             useEffect(function() {
+                if (!hasInnerBlocks) {
+                    return;
+                }
+
+                syncNestedLayoutBounds(clientId, parentMaxColumns);
+            }, [clientId, hasInnerBlocks, parentMaxColumns]);
+
+            useEffect(function() {
                 if (parentVariation !== 'awards' || !hasInnerBlocks) {
                     return;
                 }
 
-                syncAwardsPanelSettings(clientId, awardsSettings);
+                syncAwardsPanelSettings(clientId, awardsSettings, parentMaxColumns);
             }, [
                 clientId,
                 parentVariation,
                 hasInnerBlocks,
+                parentMaxColumns,
                 awardsSettings.widthColumns,
                 awardsSettings.verticalAlignment,
                 awardsSettings.horizontalAlignment,

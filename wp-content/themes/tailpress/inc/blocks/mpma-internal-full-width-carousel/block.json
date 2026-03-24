@@ -36,6 +36,10 @@
     "animationSpeed": {
       "type": "number",
       "default": 400
+    },
+    "equalPanelHeights": {
+      "type": "boolean",
+      "default": true
     }
   },
   "supports": {
