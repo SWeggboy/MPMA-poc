@@ -32,7 +32,7 @@
     },
     "awardsPanelHorizontalAlignment": {
       "type": "string",
-      "default": "center"
+      "default": ""
     },
     "awardsShowBullets": {
       "type": "boolean",

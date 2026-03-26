@@ -365,6 +365,88 @@ function tailpress_get_mpma_events_shortcode_map(): array
     );
 }
 
+function tailpress_get_mpma_posts_shortcode_map(): array
+{
+    return array(
+        'mpma_posts_list' => '',
+        'mpma_press_releases_list' => 'press-releases',
+        'mpma_member_news_list' => 'member-news',
+        'mpma_job_openings_list' => 'job-openings',
+        'mpma_trade_tariffs_list' => 'trade-tariffs',
+    );
+}
+
+function tailpress_get_mpma_hide_dates_category_slugs(): array
+{
+    return array(
+        'on-demand-courses',
+        'on-demand-webinars',
+        'on-demand-emerging-technology-webinars',
+        'on-demand-trade-webinars',
+    );
+}
+
+function tailpress_is_mpma_evergreen_event($event = null): bool
+{
+    $event = get_post($event ?: get_the_ID());
+    if (!$event instanceof WP_Post || 'tribe_events' !== $event->post_type) {
+        return false;
+    }
+
+    $slugs = wp_get_post_terms($event->ID, 'tribe_events_cat', array('fields' => 'slugs'));
+    if (is_wp_error($slugs) || empty($slugs)) {
+        return false;
+    }
+
+    return [] !== array_intersect($slugs, tailpress_get_mpma_hide_dates_category_slugs());
+}
+
+function tailpress_should_hide_mpma_event_dates(array $category_slugs, $hide_dates_atts_value): bool
+{
+    if ('' !== $hide_dates_atts_value && null !== $hide_dates_atts_value) {
+        return filter_var($hide_dates_atts_value, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    if (empty($category_slugs)) {
+        return false;
+    }
+
+    return [] === array_diff($category_slugs, tailpress_get_mpma_hide_dates_category_slugs());
+}
+
+function tailpress_should_show_past_mpma_events(array $category_slugs): bool
+{
+    if (empty($category_slugs)) {
+        return false;
+    }
+
+    return [] === array_diff($category_slugs, tailpress_get_mpma_hide_dates_category_slugs());
+}
+
+function tailpress_rewrite_mpma_embedded_nav_url(string $href, string $base_url): string
+{
+    $parts = wp_parse_url($href);
+    if (!is_array($parts)) {
+        return $href;
+    }
+
+    $query_args = array();
+    if (!empty($parts['query'])) {
+        parse_str($parts['query'], $query_args);
+    }
+
+    $path = isset($parts['path']) ? (string) $parts['path'] : '';
+    if (preg_match('#/page/(\d+)/?$#', $path, $matches)) {
+        $query_args['paged'] = absint($matches[1]);
+    } else {
+        $query_args['paged'] = 1;
+    }
+
+    $clean_base_url = strtok($base_url, '?');
+
+    return !empty($query_args) ? $clean_base_url . '?' . build_query($query_args) : $clean_base_url;
+}
+
 function tailpress_render_mpma_events_list_shortcode($atts, string $shortcode_tag = 'mpma_events_list'): string
 {
     $shortcode_map = tailpress_get_mpma_events_shortcode_map();
@@ -375,6 +457,7 @@ function tailpress_render_mpma_events_list_shortcode($atts, string $shortcode_ta
         'per_page' => 10,
         'hide_nav' => '1',
         'hide_subscribe' => '1',
+        'hide_dates' => '',
         'show_breadcrumbs' => '0',
         'category' => $default_category,
     ), $atts, 'mpma_events_list');
@@ -391,14 +474,23 @@ function tailpress_render_mpma_events_list_shortcode($atts, string $shortcode_ta
     $category_slugs = preg_split('/\s*,\s*/', (string) $atts['category']);
     $category_slugs = array_values(array_filter(array_map('sanitize_title', (array) $category_slugs)));
     $category = implode(',', $category_slugs);
+    $hide_dates = tailpress_should_hide_mpma_event_dates($category_slugs, $atts['hide_dates']);
+    $show_past_events = tailpress_should_show_past_mpma_events($category_slugs);
+    $wrapper_class = 'mpma-events-list-shortcode' . ($hide_dates ? ' mpma-events-list-shortcode--evergreen' : '');
+    $embedded_page_url = '';
+    $queried_object_id = get_queried_object_id();
+    if ($queried_object_id && is_singular()) {
+        $embedded_page_url = get_permalink($queried_object_id) ?: '';
+    }
 
     // Prefer TEC shortcode output when available (Events Calendar Pro installs this).
     if (shortcode_exists('tribe_events')) {
         $tribe_shortcode = sprintf(
-            '[tribe_events view="%s" per_page="%d"%s]',
+            '[tribe_events view="%s" per_page="%d"%s%s]',
             esc_attr($view),
             $per_page,
-            '' !== $category ? ' category="' . esc_attr($category) . '"' : ''
+            '' !== $category ? ' category="' . esc_attr($category) . '"' : '',
+            $show_past_events ? ' eventDisplay="past"' : ''
         );
 
         $html = do_shortcode($tribe_shortcode);
@@ -407,7 +499,7 @@ function tailpress_render_mpma_events_list_shortcode($atts, string $shortcode_ta
         }
 
         if (!$hide_nav && !$hide_subscribe) {
-            return '<div class="mpma-events-list-shortcode">' . $html . '</div>';
+            return '<div class="' . esc_attr($wrapper_class) . '">' . $html . '</div>';
         }
 
         if (class_exists('DOMDocument')) {
@@ -432,12 +524,44 @@ function tailpress_render_mpma_events_list_shortcode($atts, string $shortcode_ta
             if ($hide_nav) {
                 $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-calendar-list__calendar-list-nav ")]';
                 $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-calendar-list-nav ")]';
+            } elseif ($embedded_page_url) {
+                $nav_links = $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-c-nav ")]//a[@href]');
+                if ($nav_links) {
+                    for ($i = 0; $i < $nav_links->length; $i++) {
+                        $nav_link = $nav_links->item($i);
+                        if (!$nav_link instanceof DOMElement) {
+                            continue;
+                        }
+
+                        $nav_link->setAttribute(
+                            'href',
+                            tailpress_rewrite_mpma_embedded_nav_url($nav_link->getAttribute('href'), $embedded_page_url)
+                        );
+                    }
+                }
             }
 
             if ($hide_subscribe) {
                 $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-c-subscribe-dropdown ")]';
                 $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-c-subscribe-dropdown-container ")]';
                 $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-c-subscribe-dropdown__container ")]';
+            }
+
+            if ($hide_dates) {
+                $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-c-events-bar__search-container ")]';
+                $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-c-events-bar ")]';
+                $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-c-events-bar__views ")]';
+                $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-c-view-selector ")]';
+                $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-header__top-bar ")]';
+                $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-c-top-bar__datepicker ")]';
+                $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-calendar-list__month-separator ")]';
+                $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-calendar-list__event-date-tag ")]';
+                $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-calendar-list__event-datetime-wrapper ")]';
+                $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-calendar-latest-past__event-date-tag ")]';
+                $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-calendar-latest-past__event-datetime-wrapper ")]';
+                if (!$hide_nav) {
+                    $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-c-nav__list-item--today ")]';
+                }
             }
 
             foreach ($queries as $query) {
@@ -469,7 +593,7 @@ function tailpress_render_mpma_events_list_shortcode($atts, string $shortcode_ta
             libxml_clear_errors();
             libxml_use_internal_errors($internal_errors);
 
-            return '<div class="mpma-events-list-shortcode">' . $filtered_html . '</div>';
+            return '<div class="' . esc_attr($wrapper_class) . '">' . $filtered_html . '</div>';
         }
 
         // Fallback: remove known nodes with regex if DOM extension is unavailable.
@@ -492,6 +616,14 @@ function tailpress_render_mpma_events_list_shortcode($atts, string $shortcode_ta
                 '',
                 $html
             );
+        } elseif ($embedded_page_url) {
+            $html = preg_replace_callback(
+                '/href="([^"]+)"/i',
+                static function(array $matches) use ($embedded_page_url): string {
+                    return 'href="' . esc_url(tailpress_rewrite_mpma_embedded_nav_url(html_entity_decode($matches[1]), $embedded_page_url)) . '"';
+                },
+                $html
+            );
         }
 
         if ($hide_subscribe) {
@@ -502,7 +634,72 @@ function tailpress_render_mpma_events_list_shortcode($atts, string $shortcode_ta
             );
         }
 
-        return '<div class="mpma-events-list-shortcode">' . $html . '</div>';
+        if ($hide_dates) {
+            $html = preg_replace(
+                '/<[^>]+class="[^"]*tribe-events-c-events-bar__search-container[^"]*"[^>]*>.*?<\/[^>]+>/si',
+                '',
+                $html
+            );
+            $html = preg_replace(
+                '/<[^>]+class="[^"]*tribe-events-c-events-bar[^"]*"[^>]*>.*?<\/[^>]+>/si',
+                '',
+                $html
+            );
+            $html = preg_replace(
+                '/<[^>]+class="[^"]*tribe-events-c-events-bar__views[^"]*"[^>]*>.*?<\/[^>]+>/si',
+                '',
+                $html
+            );
+            $html = preg_replace(
+                '/<[^>]+class="[^"]*tribe-events-c-view-selector[^"]*"[^>]*>.*?<\/[^>]+>/si',
+                '',
+                $html
+            );
+            $html = preg_replace(
+                '/<[^>]+class="[^"]*tribe-events-header__top-bar[^"]*"[^>]*>.*?<\/[^>]+>/si',
+                '',
+                $html
+            );
+            $html = preg_replace(
+                '/<[^>]+class="[^"]*tribe-events-c-top-bar__datepicker[^"]*"[^>]*>.*?<\/[^>]+>/si',
+                '',
+                $html
+            );
+            $html = preg_replace(
+                '/<[^>]+class="[^"]*tribe-events-calendar-list__month-separator[^"]*"[^>]*>.*?<\/[^>]+>/si',
+                '',
+                $html
+            );
+            $html = preg_replace(
+                '/<[^>]+class="[^"]*tribe-events-calendar-list__event-date-tag[^"]*"[^>]*>.*?<\/[^>]+>/si',
+                '',
+                $html
+            );
+            $html = preg_replace(
+                '/<[^>]+class="[^"]*tribe-events-calendar-list__event-datetime-wrapper[^"]*"[^>]*>.*?<\/[^>]+>/si',
+                '',
+                $html
+            );
+            $html = preg_replace(
+                '/<[^>]+class="[^"]*tribe-events-calendar-latest-past__event-date-tag[^"]*"[^>]*>.*?<\/[^>]+>/si',
+                '',
+                $html
+            );
+            $html = preg_replace(
+                '/<[^>]+class="[^"]*tribe-events-calendar-latest-past__event-datetime-wrapper[^"]*"[^>]*>.*?<\/[^>]+>/si',
+                '',
+                $html
+            );
+            if (!$hide_nav) {
+                $html = preg_replace(
+                    '/<li[^>]+class="[^"]*tribe-events-c-nav__list-item--today[^"]*"[^>]*>.*?<\/li>/si',
+                    '',
+                    $html
+                );
+            }
+        }
+
+        return '<div class="' . esc_attr($wrapper_class) . '">' . $html . '</div>';
     }
 
     // Fallback for sites without Events Calendar Pro shortcode support:
@@ -510,12 +707,14 @@ function tailpress_render_mpma_events_list_shortcode($atts, string $shortcode_ta
     if (class_exists('\Tribe\Events\Views\V2\View') && function_exists('tribe_context')) {
         $context = tribe_context()->alter(array(
             'event_display' => $view,
-            'event_display_mode' => $view,
+            'event_display_mode' => $show_past_events ? 'past' : $view,
             'event_date' => 'now',
             'events_per_page' => $per_page,
             'category' => $category,
             'tribe_events_cat' => $category,
             'event_category' => $category,
+            'past' => $show_past_events,
+            'show_latest_past' => false,
             'paged' => max(1, absint(get_query_var('paged', 1))),
             'page' => max(1, absint(get_query_var('paged', 1))),
         ));
@@ -526,7 +725,7 @@ function tailpress_render_mpma_events_list_shortcode($atts, string $shortcode_ta
         }
 
         if (!$hide_nav && !$hide_subscribe) {
-            return '<div class="mpma-events-list-shortcode">' . $html . '</div>';
+            return '<div class="' . esc_attr($wrapper_class) . '">' . $html . '</div>';
         }
 
         if (class_exists('DOMDocument')) {
@@ -550,12 +749,44 @@ function tailpress_render_mpma_events_list_shortcode($atts, string $shortcode_ta
             if ($hide_nav) {
                 $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-calendar-list__calendar-list-nav ")]';
                 $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-calendar-list-nav ")]';
+            } elseif ($embedded_page_url) {
+                $nav_links = $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-c-nav ")]//a[@href]');
+                if ($nav_links) {
+                    for ($i = 0; $i < $nav_links->length; $i++) {
+                        $nav_link = $nav_links->item($i);
+                        if (!$nav_link instanceof DOMElement) {
+                            continue;
+                        }
+
+                        $nav_link->setAttribute(
+                            'href',
+                            tailpress_rewrite_mpma_embedded_nav_url($nav_link->getAttribute('href'), $embedded_page_url)
+                        );
+                    }
+                }
             }
 
             if ($hide_subscribe) {
                 $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-c-subscribe-dropdown ")]';
                 $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-c-subscribe-dropdown-container ")]';
                 $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-c-subscribe-dropdown__container ")]';
+            }
+
+            if ($hide_dates) {
+                $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-c-events-bar__search-container ")]';
+                $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-c-events-bar ")]';
+                $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-c-events-bar__views ")]';
+                $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-c-view-selector ")]';
+                $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-header__top-bar ")]';
+                $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-c-top-bar__datepicker ")]';
+                $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-calendar-list__month-separator ")]';
+                $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-calendar-list__event-date-tag ")]';
+                $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-calendar-list__event-datetime-wrapper ")]';
+                $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-calendar-latest-past__event-date-tag ")]';
+                $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-calendar-latest-past__event-datetime-wrapper ")]';
+                if (!$hide_nav) {
+                    $queries[] = '//*[contains(concat(" ", normalize-space(@class), " "), " tribe-events-c-nav__list-item--today ")]';
+                }
             }
 
             foreach ($queries as $query) {
@@ -586,7 +817,7 @@ function tailpress_render_mpma_events_list_shortcode($atts, string $shortcode_ta
             libxml_clear_errors();
             libxml_use_internal_errors($internal_errors);
 
-            return '<div class="mpma-events-list-shortcode">' . $filtered_html . '</div>';
+            return '<div class="' . esc_attr($wrapper_class) . '">' . $filtered_html . '</div>';
         }
 
         $html = preg_replace(
@@ -608,6 +839,14 @@ function tailpress_render_mpma_events_list_shortcode($atts, string $shortcode_ta
                 '',
                 $html
             );
+        } elseif ($embedded_page_url) {
+            $html = preg_replace_callback(
+                '/href="([^"]+)"/i',
+                static function(array $matches) use ($embedded_page_url): string {
+                    return 'href="' . esc_url(tailpress_rewrite_mpma_embedded_nav_url(html_entity_decode($matches[1]), $embedded_page_url)) . '"';
+                },
+                $html
+            );
         }
 
         if ($hide_subscribe) {
@@ -618,7 +857,72 @@ function tailpress_render_mpma_events_list_shortcode($atts, string $shortcode_ta
             );
         }
 
-        return '<div class="mpma-events-list-shortcode">' . $html . '</div>';
+        if ($hide_dates) {
+            $html = preg_replace(
+                '/<[^>]+class="[^"]*tribe-events-c-events-bar__search-container[^"]*"[^>]*>.*?<\/[^>]+>/si',
+                '',
+                $html
+            );
+            $html = preg_replace(
+                '/<[^>]+class="[^"]*tribe-events-c-events-bar[^"]*"[^>]*>.*?<\/[^>]+>/si',
+                '',
+                $html
+            );
+            $html = preg_replace(
+                '/<[^>]+class="[^"]*tribe-events-c-events-bar__views[^"]*"[^>]*>.*?<\/[^>]+>/si',
+                '',
+                $html
+            );
+            $html = preg_replace(
+                '/<[^>]+class="[^"]*tribe-events-c-view-selector[^"]*"[^>]*>.*?<\/[^>]+>/si',
+                '',
+                $html
+            );
+            $html = preg_replace(
+                '/<[^>]+class="[^"]*tribe-events-header__top-bar[^"]*"[^>]*>.*?<\/[^>]+>/si',
+                '',
+                $html
+            );
+            $html = preg_replace(
+                '/<[^>]+class="[^"]*tribe-events-c-top-bar__datepicker[^"]*"[^>]*>.*?<\/[^>]+>/si',
+                '',
+                $html
+            );
+            $html = preg_replace(
+                '/<[^>]+class="[^"]*tribe-events-calendar-list__month-separator[^"]*"[^>]*>.*?<\/[^>]+>/si',
+                '',
+                $html
+            );
+            $html = preg_replace(
+                '/<[^>]+class="[^"]*tribe-events-calendar-list__event-date-tag[^"]*"[^>]*>.*?<\/[^>]+>/si',
+                '',
+                $html
+            );
+            $html = preg_replace(
+                '/<[^>]+class="[^"]*tribe-events-calendar-list__event-datetime-wrapper[^"]*"[^>]*>.*?<\/[^>]+>/si',
+                '',
+                $html
+            );
+            $html = preg_replace(
+                '/<[^>]+class="[^"]*tribe-events-calendar-latest-past__event-date-tag[^"]*"[^>]*>.*?<\/[^>]+>/si',
+                '',
+                $html
+            );
+            $html = preg_replace(
+                '/<[^>]+class="[^"]*tribe-events-calendar-latest-past__event-datetime-wrapper[^"]*"[^>]*>.*?<\/[^>]+>/si',
+                '',
+                $html
+            );
+            if (!$hide_nav) {
+                $html = preg_replace(
+                    '/<li[^>]+class="[^"]*tribe-events-c-nav__list-item--today[^"]*"[^>]*>.*?<\/li>/si',
+                    '',
+                    $html
+                );
+            }
+        }
+
+        return '<div class="' . esc_attr($wrapper_class) . '">' . $html . '</div>';
     }
 
     return '';
@@ -627,6 +931,149 @@ function tailpress_render_mpma_events_list_shortcode($atts, string $shortcode_ta
 foreach (array_keys(tailpress_get_mpma_events_shortcode_map()) as $mpma_events_shortcode) {
     add_shortcode($mpma_events_shortcode, function($atts, $content = null, $shortcode_tag = 'mpma_events_list') {
         return tailpress_render_mpma_events_list_shortcode($atts, (string) $shortcode_tag);
+    });
+}
+
+function tailpress_render_mpma_posts_list_shortcode($atts, string $shortcode_tag = 'mpma_posts_list'): string
+{
+    $shortcode_map = tailpress_get_mpma_posts_shortcode_map();
+    $default_category = $shortcode_map[sanitize_key($shortcode_tag)] ?? '';
+
+    $atts = shortcode_atts(array(
+        'category' => $default_category,
+        'per_page' => 10,
+        'show_excerpt' => '1',
+        'show_date' => '0',
+        'show_author' => '0',
+        'show_image' => '1',
+        'paged' => '',
+    ), $atts, 'mpma_posts_list');
+
+    $category_slugs = preg_split('/\s*,\s*/', (string) $atts['category']);
+    $category_slugs = array_values(array_filter(array_map('sanitize_title', (array) $category_slugs)));
+
+    if (empty($category_slugs)) {
+        return '';
+    }
+
+    $per_page = max(1, absint($atts['per_page']));
+    $show_excerpt = filter_var($atts['show_excerpt'], FILTER_VALIDATE_BOOLEAN);
+    $show_date = filter_var($atts['show_date'], FILTER_VALIDATE_BOOLEAN);
+    $show_author = filter_var($atts['show_author'], FILTER_VALIDATE_BOOLEAN);
+    $show_image = filter_var($atts['show_image'], FILTER_VALIDATE_BOOLEAN);
+    $paged = absint($atts['paged']);
+
+    if ($paged < 1) {
+        $paged = max(1, absint(get_query_var('paged')), absint(get_query_var('page')));
+    }
+
+    $query = new WP_Query(array(
+        'post_type' => 'post',
+        'post_status' => 'publish',
+        'posts_per_page' => $per_page,
+        'paged' => $paged,
+        'ignore_sticky_posts' => true,
+        'category_name' => implode(',', $category_slugs),
+    ));
+
+    if (!$query->have_posts()) {
+        wp_reset_postdata();
+        return '<div class="mpma-posts-list-shortcode"><p>No posts found.</p></div>';
+    }
+
+    $base_url = '';
+    $queried_object_id = get_queried_object_id();
+    if ($queried_object_id && is_singular()) {
+        $base_url = get_permalink($queried_object_id) ?: '';
+    }
+
+    ob_start();
+    ?>
+    <div class="mpma-posts-list-shortcode">
+        <?php while ($query->have_posts()) : $query->the_post(); ?>
+            <article id="post-<?php the_ID(); ?>" <?php post_class('mpma-posts-list-shortcode__item'); ?>>
+                <div class="mpma-posts-list-shortcode__body">
+                    <?php if ($show_date || $show_author) : ?>
+                        <div class="mpma-posts-list-shortcode__meta">
+                            <?php if ($show_date) : ?>
+                                <time datetime="<?php echo esc_attr(get_the_date('c')); ?>" itemprop="datePublished" class="mpma-posts-list-shortcode__date"><?php echo esc_html(get_the_date()); ?></time>
+                            <?php endif; ?>
+
+                            <?php if ($show_author) : ?>
+                                <div class="mpma-posts-list-shortcode__author"><?php the_author(); ?></div>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="mpma-posts-list-shortcode__content">
+                        <h2 class="mpma-posts-list-shortcode__title text-2xl font-semibold text-zinc-950">
+                            <a href="<?php the_permalink(); ?>" class="!no-underline"><?php the_title(); ?></a>
+                        </h2>
+
+                        <?php if ($show_image && has_post_thumbnail()) : ?>
+                            <div class="mpma-posts-list-shortcode__image mt-6 overflow-hidden rounded-3xl bg-light">
+                                <a href="<?php the_permalink(); ?>" class="block">
+                                    <?php the_post_thumbnail('large', array('class' => 'aspect-16/10 w-full object-cover')); ?>
+                                </a>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if ($show_excerpt) : ?>
+                            <div class="mpma-posts-list-shortcode__excerpt mt-4 max-w-2xl text-base text-zinc-600">
+                                <?php the_excerpt(); ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </article>
+        <?php endwhile; ?>
+
+        <?php if ($query->max_num_pages > 1) : ?>
+            <nav class="mpma-posts-list-shortcode__pagination mt-12 flex items-center justify-between gap-4 text-sm font-semibold" aria-label="<?php esc_attr_e('Posts pagination', 'tailpress'); ?>">
+                <div>
+                    <?php if ($paged > 1) : ?>
+                        <?php
+                        $prev_url = $base_url ? add_query_arg('paged', $paged - 1, $base_url) : get_pagenum_link($paged - 1);
+                        ?>
+                        <a class="mpma-posts-list-shortcode__pagination-link !no-underline inline-flex items-center text-zinc-900 transition hover:text-primary" href="<?php echo esc_url($prev_url); ?>">
+                            <?php esc_html_e('Previous', 'tailpress'); ?>
+                        </a>
+                    <?php endif; ?>
+                </div>
+                <div class="text-zinc-600">
+                    <?php
+                    echo esc_html(
+                        sprintf(
+                            __('Page %1$d of %2$d', 'tailpress'),
+                            $paged,
+                            (int) $query->max_num_pages
+                        )
+                    );
+                    ?>
+                </div>
+                <div class="ml-auto">
+                    <?php if ($paged < (int) $query->max_num_pages) : ?>
+                        <?php
+                        $next_url = $base_url ? add_query_arg('paged', $paged + 1, $base_url) : get_pagenum_link($paged + 1);
+                        ?>
+                        <a class="mpma-posts-list-shortcode__pagination-link !no-underline inline-flex items-center text-zinc-900 transition hover:text-primary" href="<?php echo esc_url($next_url); ?>">
+                            <?php esc_html_e('Next', 'tailpress'); ?>
+                        </a>
+                    <?php endif; ?>
+                </div>
+            </nav>
+        <?php endif; ?>
+    </div>
+    <?php
+
+    wp_reset_postdata();
+
+    return (string) ob_get_clean();
+}
+
+foreach (array_keys(tailpress_get_mpma_posts_shortcode_map()) as $mpma_posts_shortcode) {
+    add_shortcode($mpma_posts_shortcode, function($atts, $content = null, $shortcode_tag = 'mpma_posts_list') {
+        return tailpress_render_mpma_posts_list_shortcode($atts, (string) $shortcode_tag);
     });
 }
 
@@ -731,6 +1178,39 @@ add_action('wp_enqueue_scripts', function() {
         }
     }
 }, 120);
+
+add_filter('tribe_the_notices', function($html, $notices) {
+    if (!is_singular('tribe_events') || !tailpress_is_mpma_evergreen_event()) {
+        return $html;
+    }
+
+    if (empty($notices)) {
+        return $html;
+    }
+
+    $passed_notice = sprintf(
+        esc_html__('This %s has passed.', 'the-events-calendar'),
+        tribe_get_event_label_singular_lowercase()
+    );
+
+    $filtered_notices = array_values(array_filter((array) $notices, static function($notice) use ($passed_notice) {
+        return trim(wp_strip_all_tags((string) $notice)) !== $passed_notice;
+    }));
+
+    if (empty($filtered_notices)) {
+        return '';
+    }
+
+    return '<div class="tribe-events-notices"><ul><li>' . implode('</li><li>', $filtered_notices) . '</li></ul></div>';
+}, 20, 2);
+
+add_filter('comments_open', function($open, $post_id) {
+    return get_post_type($post_id) === 'post' ? false : $open;
+}, 10, 2);
+
+add_filter('pings_open', function($open, $post_id) {
+    return get_post_type($post_id) === 'post' ? false : $open;
+}, 10, 2);
 
 // Register custom block category
 add_filter('block_categories_all', function($categories) {
@@ -1428,90 +1908,100 @@ add_action('enqueue_block_editor_assets', function() {
 
 // Register sidebar visibility meta field
 add_action('init', function() {
-    register_post_meta('page', 'show_sidebar', array(
-        'show_in_rest' => true,
-        'single' => true,
-        'type' => 'boolean',
-        'default' => true,
-    ));
+    $register_post_types = array('page', 'post', 'tribe_events');
 
-    register_post_meta('page', 'sidebar_floating', array(
-        'show_in_rest' => true,
-        'single' => true,
-        'type' => 'boolean',
-        'default' => true,
-    ));
+    foreach ($register_post_types as $post_type) {
+        register_post_meta($post_type, 'show_sidebar', array(
+            'show_in_rest' => true,
+            'single' => true,
+            'type' => 'boolean',
+            'default' => true,
+        ));
 
-    register_post_meta('page', 'page_title_bg_enabled', array(
-        'show_in_rest' => true,
-        'single' => true,
-        'type' => 'boolean',
-        'default' => false,
-    ));
+        register_post_meta($post_type, 'sidebar_floating', array(
+            'show_in_rest' => true,
+            'single' => true,
+            'type' => 'boolean',
+            'default' => true,
+        ));
 
-    register_post_meta('page', 'page_title_bg_image_id', array(
-        'show_in_rest' => true,
-        'single' => true,
-        'type' => 'integer',
-        'default' => 0,
-    ));
+        register_post_meta($post_type, 'page_title_bg_enabled', array(
+            'show_in_rest' => true,
+            'single' => true,
+            'type' => 'boolean',
+            'default' => false,
+        ));
 
-    register_post_meta('page', 'page_title_bg_subtitle', array(
-        'show_in_rest' => true,
-        'single' => true,
-        'type' => 'string',
-        'default' => '',
-    ));
+        register_post_meta($post_type, 'page_title_bg_image_id', array(
+            'show_in_rest' => true,
+            'single' => true,
+            'type' => 'integer',
+            'default' => 0,
+        ));
 
-    register_post_meta('page', 'page_title_bg_use_h1', array(
-        'show_in_rest' => true,
-        'single' => true,
-        'type' => 'boolean',
-        'default' => true,
-    ));
+        register_post_meta($post_type, 'page_title_bg_subtitle', array(
+            'show_in_rest' => true,
+            'single' => true,
+            'type' => 'string',
+            'default' => '',
+        ));
 
-    register_post_meta('page', 'page_title_bg_min_height', array(
-        'show_in_rest' => true,
-        'single' => true,
-        'type' => 'string',
-        'default' => '26.625rem',
-    ));
+        register_post_meta($post_type, 'page_title_bg_use_h1', array(
+            'show_in_rest' => true,
+            'single' => true,
+            'type' => 'boolean',
+            'default' => true,
+        ));
 
-    register_post_meta('page', 'page_title_bg_min_height_mobile', array(
-        'show_in_rest' => true,
-        'single' => true,
-        'type' => 'string',
-        'default' => '12rem',
-    ));
+        register_post_meta($post_type, 'page_title_bg_min_height', array(
+            'show_in_rest' => true,
+            'single' => true,
+            'type' => 'string',
+            'default' => '26.625rem',
+        ));
 
-    register_post_meta('page', 'page_title_bg_overlay_opacity', array(
-        'show_in_rest' => true,
-        'single' => true,
-        'type' => 'number',
-        'default' => 0.95,
-    ));
-    
-    // Register event section visibility meta fields
-    register_post_meta('page', 'show_events_courses', array(
-        'show_in_rest' => true,
-        'single' => true,
-        'type' => 'boolean',
-        'default' => true,
-    ));
-    
-    register_post_meta('page', 'show_events_webinars', array(
-        'show_in_rest' => true,
-        'single' => true,
-        'type' => 'boolean',
-        'default' => true,
-    ));
-    
-    register_post_meta('page', 'show_events_events', array(
-        'show_in_rest' => true,
-        'single' => true,
-        'type' => 'boolean',
-        'default' => true,
-    ));
+        register_post_meta($post_type, 'page_title_bg_min_height_mobile', array(
+            'show_in_rest' => true,
+            'single' => true,
+            'type' => 'string',
+            'default' => '12rem',
+        ));
+
+        register_post_meta($post_type, 'page_title_bg_overlay_opacity', array(
+            'show_in_rest' => true,
+            'single' => true,
+            'type' => 'number',
+            'default' => 0.95,
+        ));
+
+        register_post_meta($post_type, 'show_events_courses', array(
+            'show_in_rest' => true,
+            'single' => true,
+            'type' => 'boolean',
+            'default' => true,
+        ));
+
+        register_post_meta($post_type, 'show_events_webinars', array(
+            'show_in_rest' => true,
+            'single' => true,
+            'type' => 'boolean',
+            'default' => true,
+        ));
+
+        register_post_meta($post_type, 'show_events_events', array(
+            'show_in_rest' => true,
+            'single' => true,
+            'type' => 'boolean',
+            'default' => true,
+        ));
+
+        register_post_meta($post_type, 'show_events_collapsible', array(
+            'show_in_rest' => true,
+            'single' => true,
+            'type' => 'boolean',
+            'default' => 'page' === $post_type,
+        ));
+    }
 });
 
 // Add sidebar toggle to block editor

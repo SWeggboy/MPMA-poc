@@ -32,6 +32,7 @@ class Upcoming_Events_Widget extends WP_Widget {
         $page_show_courses = get_post_meta($page_id, 'show_events_courses', true);
         $page_show_webinars = get_post_meta($page_id, 'show_events_webinars', true);
         $page_show_events = get_post_meta($page_id, 'show_events_events', true);
+        $page_events_collapsible = get_post_meta($page_id, 'show_events_collapsible', true);
         
         // Convert to boolean
         // WordPress stores true as '1' (string) and false as '' (empty string) when using boolean type in REST API
@@ -39,10 +40,13 @@ class Upcoming_Events_Widget extends WP_Widget {
         $courses_exists = metadata_exists('post', $page_id, 'show_events_courses');
         $webinars_exists = metadata_exists('post', $page_id, 'show_events_webinars');
         $events_exists = metadata_exists('post', $page_id, 'show_events_events');
+        $collapsible_exists = metadata_exists('post', $page_id, 'show_events_collapsible');
         
         $page_show_courses = !$courses_exists ? true : ($page_show_courses === '1' || $page_show_courses === 1 || $page_show_courses === true);
         $page_show_webinars = !$webinars_exists ? true : ($page_show_webinars === '1' || $page_show_webinars === 1 || $page_show_webinars === true);
         $page_show_events = !$events_exists ? true : ($page_show_events === '1' || $page_show_events === 1 || $page_show_events === true);
+        $default_events_collapsible = get_post_type($page_id) === 'page';
+        $events_collapsible = !$collapsible_exists ? $default_events_collapsible : ($page_events_collapsible === '1' || $page_events_collapsible === 1 || $page_events_collapsible === true);
 
         // Get widget-level toggle settings
         $widget_show_courses = !isset($instance['show_courses']) || $instance['show_courses'];
@@ -86,16 +90,57 @@ class Upcoming_Events_Widget extends WP_Widget {
             return tribe_get_events($args);
         };
 
+        $visible_sections = array_values(array_filter([
+            $show_courses ? 'courses' : null,
+            $show_webinars ? 'webinars' : null,
+            $show_events ? 'events' : null,
+        ]));
+
+        $default_open_section = $visible_sections[0] ?? '';
+
         // Render section function
-        $render_section = function($events, $title) use ($args) {
+        $render_section = function($events, $title, $section_slug, $is_expanded_by_default = false) use ($args, $events_collapsible) {
             if (empty($events)) {
                 return;
             }
 
-            echo '<div class="tribe-events-section mb-8 last:mb-0">';
-            // Use same styling as widget title
-            echo $args['before_title'] . esc_html($title) . $args['after_title'];
+            if (!$events_collapsible) {
+                echo '<div class="tribe-events-section mb-8 last:mb-0" data-sidebar-section="' . esc_attr($section_slug) . '">';
+                echo $args['before_title'] . esc_html($title) . $args['after_title'];
+                echo '<div class="tribe-events-widget-events-list">';
+            } else {
+            $section_id = 'tribe-events-section-' . sanitize_html_class($section_slug) . '-' . wp_unique_id();
+            $toggle_id = $section_id . '-toggle';
+            $content_id = $section_id . '-content';
+
+            echo '<section class="tribe-events-section tribe-events-section--accordion mb-6 last:mb-0" data-sidebar-section="' . esc_attr($section_slug) . '">';
+            echo '<h2 class="tribe-events-section__heading widget-title text-2xl font-semibold mb-0">';
+            echo '<button'
+                . ' type="button"'
+                . ' id="' . esc_attr($toggle_id) . '"'
+                . ' class="tribe-events-section__toggle flex w-full items-center justify-between gap-4 py-1 text-left"'
+                . ' aria-expanded="' . ($is_expanded_by_default ? 'true' : 'false') . '"'
+                . ' aria-controls="' . esc_attr($content_id) . '"'
+                . '>';
+            echo '<span class="tribe-events-section__toggle-label">' . esc_html($title) . '</span>';
+            echo '<span class="tribe-events-section__toggle-icon inline-flex h-7 w-7 items-center justify-center text-primary transition-transform duration-300" aria-hidden="true">';
+            echo '<svg viewBox="0 0 20 20" fill="currentColor" class="h-7 w-7">';
+            echo '<path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd" />';
+            echo '</svg>';
+            echo '</span>';
+            echo '</button>';
+            echo '</h2>';
+            echo '<div'
+                . ' id="' . esc_attr($content_id) . '"'
+                . ' class="tribe-events-section__panel overflow-hidden"'
+                . ' role="region"'
+                . ' aria-labelledby="' . esc_attr($toggle_id) . '"'
+                . ' style="' . esc_attr($is_expanded_by_default ? 'max-height:none;opacity:1;' : 'max-height:0;opacity:0;') . '"'
+                . ($is_expanded_by_default ? '' : ' hidden')
+                . '>';
+            echo '<div class="tribe-events-section__panel-inner pt-4">';
             echo '<div class="tribe-events-widget-events-list">';
+            }
             
             foreach ($events as $event) {
                 setup_postdata($event);
@@ -197,9 +242,16 @@ class Upcoming_Events_Widget extends WP_Widget {
                 echo '</div>';
             }
             
-            echo '</div>';
-            echo '<div class="border-b border-gray-200 mt-4"></div>';
-            echo '</div>';
+            if (!$events_collapsible) {
+                echo '</div>';
+                echo '<div class="border-b border-gray-200 mt-4"></div>';
+                echo '</div>';
+            } else {
+                echo '</div>';
+                echo '</div>';
+                echo '</div>';
+                echo '</section>';
+            }
             
             wp_reset_postdata();
         };
@@ -207,17 +259,17 @@ class Upcoming_Events_Widget extends WP_Widget {
         // Render each section based on toggle settings
         if ($show_courses) {
             $courses = $get_events_by_category('courses', 3);
-            $render_section($courses, __('Upcoming Courses', 'tailpress'));
+            $render_section($courses, __('Upcoming Courses', 'tailpress'), 'courses', $default_open_section === 'courses');
         }
 
         if ($show_webinars) {
             $webinars = $get_events_by_category('webinars', 3);
-            $render_section($webinars, __('Upcoming Webinars', 'tailpress'));
+            $render_section($webinars, __('Upcoming Webinars', 'tailpress'), 'webinars', $default_open_section === 'webinars');
         }
 
         if ($show_events) {
             $events = $get_events_by_category('events', 3);
-            $render_section($events, __('Upcoming Events', 'tailpress'));
+            $render_section($events, __('Upcoming Events', 'tailpress'), 'events', $default_open_section === 'events');
         }
 
         // View all link - only show if at least one section is enabled

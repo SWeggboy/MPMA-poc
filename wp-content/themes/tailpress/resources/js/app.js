@@ -180,6 +180,91 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
+// Sidebar accordion sections for courses, webinars, and events
+document.addEventListener('DOMContentLoaded', function () {
+    const accordionToggles = document.querySelectorAll('.tribe-events-section__toggle');
+
+    if (!accordionToggles.length) {
+        return;
+    }
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const setExpandedState = function (toggle, panel, shouldExpand) {
+        toggle.setAttribute('aria-expanded', shouldExpand ? 'true' : 'false');
+
+        if (prefersReducedMotion) {
+            panel.hidden = !shouldExpand;
+            panel.style.maxHeight = shouldExpand ? 'none' : '0px';
+            panel.style.opacity = shouldExpand ? '1' : '0';
+            return;
+        }
+
+        if (shouldExpand) {
+            panel.hidden = false;
+            panel.style.maxHeight = '0px';
+            panel.style.opacity = '0';
+
+            window.requestAnimationFrame(function () {
+                panel.style.maxHeight = `${panel.scrollHeight}px`;
+                panel.style.opacity = '1';
+            });
+
+            const handleExpandEnd = function (event) {
+                if (event.propertyName !== 'max-height') {
+                    return;
+                }
+
+                panel.style.maxHeight = 'none';
+                panel.removeEventListener('transitionend', handleExpandEnd);
+            };
+
+            panel.addEventListener('transitionend', handleExpandEnd);
+            return;
+        }
+
+        const currentHeight = panel.scrollHeight;
+        panel.style.maxHeight = `${currentHeight}px`;
+        panel.style.opacity = '1';
+
+        window.requestAnimationFrame(function () {
+            panel.style.maxHeight = '0px';
+            panel.style.opacity = '0';
+        });
+
+        const handleCollapseEnd = function (event) {
+            if (event.propertyName !== 'max-height') {
+                return;
+            }
+
+            panel.hidden = true;
+            panel.removeEventListener('transitionend', handleCollapseEnd);
+        };
+
+        panel.addEventListener('transitionend', handleCollapseEnd);
+    };
+
+    accordionToggles.forEach(function (toggle) {
+        const panelId = toggle.getAttribute('aria-controls');
+        const panel = panelId ? document.getElementById(panelId) : null;
+
+        if (!panel) {
+            return;
+        }
+
+        const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+        panel.style.maxHeight = isExpanded ? 'none' : '0px';
+        panel.style.opacity = isExpanded ? '1' : '0';
+        panel.hidden = !isExpanded;
+        panel.classList.add('is-ready');
+
+        toggle.addEventListener('click', function () {
+            const shouldExpand = toggle.getAttribute('aria-expanded') !== 'true';
+            setExpandedState(toggle, panel, shouldExpand);
+        });
+    });
+});
+
 // MPMA hero cross-fade carousel
 document.addEventListener('DOMContentLoaded', function () {
     const heroCarousels = document.querySelectorAll('.mpma-hero-carousel');

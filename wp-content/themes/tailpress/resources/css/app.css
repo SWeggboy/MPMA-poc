@@ -1685,7 +1685,48 @@
     margin: 0;
     padding: 0;
     list-style: none;
-    text-align: inherit;
+  }
+
+  .mpma-internal-layout__column--horizontal-left > .mpma-internal-layout__column-inner > .mpma-internal-carousel-awards-panel {
+    text-align: left;
+  }
+
+  .mpma-internal-layout__column--horizontal-left > .mpma-internal-layout__column-inner > .mpma-internal-carousel-awards-panel .mpma-internal-carousel-awards-list {
+    text-align: left;
+  }
+
+  .mpma-internal-layout__column--horizontal-center > .mpma-internal-layout__column-inner > .mpma-internal-carousel-awards-panel {
+    text-align: center;
+  }
+
+  .mpma-internal-layout__column--horizontal-right > .mpma-internal-layout__column-inner > .mpma-internal-carousel-awards-panel {
+    text-align: right;
+  }
+
+  .mpma-internal-layout__column--horizontal-center > .mpma-internal-layout__column-inner > .mpma-internal-carousel-awards-panel .mpma-internal-carousel-awards-list {
+    text-align: center;
+  }
+
+  .mpma-internal-layout__column--horizontal-right > .mpma-internal-layout__column-inner > .mpma-internal-carousel-awards-panel .mpma-internal-carousel-awards-list {
+    text-align: right;
+  }
+
+  .mpma-internal-layout__column--horizontal-left > .mpma-internal-layout__column-inner > .mpma-internal-carousel-awards-panel .mpma-internal-carousel-awards-list.has-dividers li + li::before {
+    left: 0;
+    right: auto;
+    transform: none;
+  }
+
+  .mpma-internal-layout__column--horizontal-center > .mpma-internal-layout__column-inner > .mpma-internal-carousel-awards-panel .mpma-internal-carousel-awards-list.has-dividers li + li::before {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
+
+  .mpma-internal-layout__column--horizontal-right > .mpma-internal-layout__column-inner > .mpma-internal-carousel-awards-panel .mpma-internal-carousel-awards-list.has-dividers li + li::before {
+    left: auto;
+    right: 0;
+    transform: none;
   }
 
   .mpma-internal-carousel-awards-list li {
@@ -1714,29 +1755,6 @@
     width: min(100%, var(--layout-column-width));
     border-top: 1px solid #d1d5db;
     transform: translateX(-50%);
-  }
-
-  .mpma-internal-layout__column--horizontal-left > .mpma-internal-layout__column-inner > .mpma-internal-carousel-awards-panel .mpma-internal-carousel-awards-list {
-    text-align: left;
-  }
-
-  .mpma-internal-layout__column--horizontal-left > .mpma-internal-layout__column-inner > .mpma-internal-carousel-awards-panel .mpma-internal-carousel-awards-list.has-dividers li + li::before {
-    left: 0;
-    transform: none;
-  }
-
-  .mpma-internal-layout__column--horizontal-center > .mpma-internal-layout__column-inner > .mpma-internal-carousel-awards-panel .mpma-internal-carousel-awards-list {
-    text-align: center;
-  }
-
-  .mpma-internal-layout__column--horizontal-right > .mpma-internal-layout__column-inner > .mpma-internal-carousel-awards-panel .mpma-internal-carousel-awards-list {
-    text-align: right;
-  }
-
-  .mpma-internal-layout__column--horizontal-right > .mpma-internal-layout__column-inner > .mpma-internal-carousel-awards-panel .mpma-internal-carousel-awards-list.has-dividers li + li::before {
-    left: auto;
-    right: 0;
-    transform: none;
   }
 
   .mpma-internal-full-width-carousel-slide-editor {

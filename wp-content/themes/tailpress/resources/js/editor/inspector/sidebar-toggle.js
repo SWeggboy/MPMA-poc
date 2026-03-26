@@ -1,12 +1,12 @@
 /**
- * Add sidebar visibility toggle to page editor
+ * Add sidebar visibility toggles to page and post editors
  */
 (function() {
     const { registerPlugin } = wp.plugins;
     const { PluginDocumentSettingPanel } = wp.editPost;
     const { ToggleControl } = wp.components;
     const { useSelect, useDispatch } = wp.data;
-    const { __ } = wp.i18n;
+    const { __, sprintf } = wp.i18n;
     const { createElement } = wp.element;
 
     const SidebarToggle = function() {
@@ -14,8 +14,8 @@
             return select('core/editor').getCurrentPostType();
         }, []);
         
-        // Only show on pages
-        if (postType !== 'page') {
+        // Only show on pages and posts
+        if (postType !== 'page' && postType !== 'post' && postType !== 'tribe_events') {
             return null;
         }
 
@@ -57,6 +57,10 @@
             });
         };
 
+        const objectLabel = postType === 'page'
+            ? __('page', 'tailpress')
+            : (postType === 'tribe_events' ? __('event', 'tailpress') : __('post', 'tailpress'));
+
         return createElement(
             PluginDocumentSettingPanel,
             {
@@ -65,7 +69,7 @@
                 className: 'sidebar-visibility-panel'
             },
             createElement(ToggleControl, {
-                label: __('Show sidebar on this page', 'tailpress'),
+                label: sprintf(__('Show sidebar on this %s', 'tailpress'), objectLabel),
                 checked: showSidebar,
                 onChange: handleToggle,
                 help: __('Toggle to show or hide the sidebar widget area.', 'tailpress')

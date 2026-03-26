@@ -109,7 +109,7 @@
                             horizontalAlignment: awardsHorizontalAlignment
                         }, [
                             ['core/group', {
-                                className: 'mpma-internal-carousel-awards-panel',
+                                className: 'mpma-internal-carousel-awards-panel mpma-internal-carousel-awards-panel--carousel',
                                 style: {
                                     spacing: {
                                         padding: {

@@ -165,11 +165,10 @@
                     ['tailpress/mpma-internal-layout-row', { columnCount: 1 }, [
                         ['tailpress/mpma-internal-layout-column', {
                             widthColumns: awardsWidthColumns,
-                            verticalAlignment: awardsVerticalAlignment,
-                            horizontalAlignment: awardsHorizontalAlignment
+                            verticalAlignment: awardsVerticalAlignment
                         }, [
                             ['core/group', {
-                                className: 'mpma-internal-carousel-awards-panel',
+                                className: 'mpma-internal-carousel-awards-panel mpma-internal-carousel-awards-panel--carousel',
                                 style: {
                                     spacing: {
                                         padding: {
@@ -294,6 +293,60 @@
         return null;
     };
 
+    const getAwardsPanelStateFromBlocks = function(blocks) {
+        const firstLayoutBlock = findFirstBlock(blocks, function(block) {
+            return block.name === 'tailpress/mpma-internal-layout';
+        });
+        const firstColumnBlock = findFirstBlock(blocks, function(block) {
+            return block.name === 'tailpress/mpma-internal-layout-column';
+        });
+        const firstPanelBlock = findFirstBlock(blocks, function(block) {
+            return block.name === 'core/group'
+                && block.attributes
+                && typeof block.attributes.className === 'string'
+                && block.attributes.className.indexOf('mpma-internal-carousel-awards-panel') !== -1;
+        });
+        const firstListBlock = findFirstBlock(blocks, function(block) {
+            return block.name === 'core/list';
+        });
+
+        const layoutAttributes = firstLayoutBlock && firstLayoutBlock.attributes ? firstLayoutBlock.attributes : {};
+        const columnAttributes = firstColumnBlock && firstColumnBlock.attributes ? firstColumnBlock.attributes : {};
+        const panelAttributes = firstPanelBlock && firstPanelBlock.attributes ? firstPanelBlock.attributes : {};
+        const panelStyle = panelAttributes.style || {};
+        const panelSpacing = panelStyle.spacing || {};
+        const panelPadding = panelSpacing.padding || {};
+        const listClassName = firstListBlock && firstListBlock.attributes ? String(firstListBlock.attributes.className || '') : '';
+
+        return {
+            widthColumns: Math.max(1, Number(columnAttributes.widthColumns) || 6),
+            verticalAlignment: ['top', 'center', 'bottom'].includes(columnAttributes.verticalAlignment)
+                ? columnAttributes.verticalAlignment
+                : 'top',
+            horizontalAlignment: ['left', 'center', 'right'].includes(layoutAttributes.contentPosition)
+                ? layoutAttributes.contentPosition
+                : 'center',
+            showBullets: listClassName.indexOf('has-bullets') !== -1,
+            showDividers: listClassName.indexOf('has-dividers') !== -1 || listClassName === 'mpma-internal-carousel-awards-list',
+            paddingTop: getAwardsPaddingValue(panelPadding.top, '2rem'),
+            paddingRight: getAwardsPaddingValue(panelPadding.right, '1.5rem'),
+            paddingBottom: getAwardsPaddingValue(panelPadding.bottom, '2rem'),
+            paddingLeft: getAwardsPaddingValue(panelPadding.left, '1.5rem')
+        };
+    };
+
+    const areAwardsSettingsEqual = function(attributes, existingState) {
+        return (Math.max(1, Number(attributes.awardsPanelWidthColumns) || 6) === existingState.widthColumns)
+            && ((['top', 'center', 'bottom'].includes(attributes.awardsPanelVerticalAlignment) ? attributes.awardsPanelVerticalAlignment : 'top') === existingState.verticalAlignment)
+            && ((['left', 'center', 'right'].includes(attributes.awardsPanelHorizontalAlignment) ? attributes.awardsPanelHorizontalAlignment : 'center') === existingState.horizontalAlignment)
+            && (!!attributes.awardsShowBullets === existingState.showBullets)
+            && ((attributes.awardsShowDividers !== false) === existingState.showDividers)
+            && (getAwardsPaddingValue(attributes.awardsPanelPaddingTop, '2rem') === existingState.paddingTop)
+            && (getAwardsPaddingValue(attributes.awardsPanelPaddingRight, '1.5rem') === existingState.paddingRight)
+            && (getAwardsPaddingValue(attributes.awardsPanelPaddingBottom, '2rem') === existingState.paddingBottom)
+            && (getAwardsPaddingValue(attributes.awardsPanelPaddingLeft, '1.5rem') === existingState.paddingLeft);
+    };
+
     const syncHeadingWithLabel = function(clientId, nextLabel) {
         const blockEditorStore = wp.data.select('core/block-editor');
         const currentBlock = blockEditorStore.getBlock(clientId);
@@ -360,10 +413,6 @@
 
             if ((currentColumnAttributes.verticalAlignment || 'top') !== settings.verticalAlignment) {
                 nextColumnAttributes.verticalAlignment = settings.verticalAlignment;
-            }
-
-            if ((currentColumnAttributes.horizontalAlignment || 'left') !== settings.horizontalAlignment) {
-                nextColumnAttributes.horizontalAlignment = settings.horizontalAlignment;
             }
 
             if (Object.keys(nextColumnAttributes).length) {
@@ -440,19 +489,6 @@
             const navLabel = String(attributes.navLabel || '');
             const seedVariation = attributes.seedVariation === 'awards' ? 'awards' : attributes.seedVariation === 'default' ? 'default' : '';
             const isCustomized = !!attributes.isCustomized;
-            const awardsPanelWidthColumns = Math.max(1, Number(attributes.awardsPanelWidthColumns) || 6);
-            const awardsPanelVerticalAlignment = ['top', 'center', 'bottom'].includes(attributes.awardsPanelVerticalAlignment)
-                ? attributes.awardsPanelVerticalAlignment
-                : 'top';
-            const awardsPanelHorizontalAlignment = ['left', 'center', 'right'].includes(attributes.awardsPanelHorizontalAlignment)
-                ? attributes.awardsPanelHorizontalAlignment
-                : 'center';
-            const awardsShowBullets = !!attributes.awardsShowBullets;
-            const awardsShowDividers = attributes.awardsShowDividers !== false;
-            const awardsPanelPaddingTop = getAwardsPaddingValue(attributes.awardsPanelPaddingTop, '2rem');
-            const awardsPanelPaddingRight = getAwardsPaddingValue(attributes.awardsPanelPaddingRight, '1.5rem');
-            const awardsPanelPaddingBottom = getAwardsPaddingValue(attributes.awardsPanelPaddingBottom, '2rem');
-            const awardsPanelPaddingLeft = getAwardsPaddingValue(attributes.awardsPanelPaddingLeft, '1.5rem');
             const editorState = useSelect(function(select) {
                 const blockEditor = select('core/block-editor');
                 const rootClientId = select('core/block-editor').getBlockRootClientId(clientId);
@@ -471,6 +507,20 @@
             const parentVariation = editorState.parentVariation;
             const hasInnerBlocks = editorState.hasInnerBlocks;
             const currentInnerBlocks = Array.isArray(editorState.innerBlocks) ? editorState.innerBlocks : [];
+            const existingAwardsPanelState = getAwardsPanelStateFromBlocks(currentInnerBlocks);
+            const awardsPanelWidthColumns = Math.max(1, Number(attributes.awardsPanelWidthColumns) || 6);
+            const awardsPanelVerticalAlignment = ['top', 'center', 'bottom'].includes(attributes.awardsPanelVerticalAlignment)
+                ? attributes.awardsPanelVerticalAlignment
+                : 'top';
+            const awardsPanelHorizontalAlignment = ['left', 'center', 'right'].includes(attributes.awardsPanelHorizontalAlignment)
+                ? attributes.awardsPanelHorizontalAlignment
+                : existingAwardsPanelState.horizontalAlignment;
+            const awardsShowBullets = !!attributes.awardsShowBullets;
+            const awardsShowDividers = attributes.awardsShowDividers !== false;
+            const awardsPanelPaddingTop = getAwardsPaddingValue(attributes.awardsPanelPaddingTop, '2rem');
+            const awardsPanelPaddingRight = getAwardsPaddingValue(attributes.awardsPanelPaddingRight, '1.5rem');
+            const awardsPanelPaddingBottom = getAwardsPaddingValue(attributes.awardsPanelPaddingBottom, '2rem');
+            const awardsPanelPaddingLeft = getAwardsPaddingValue(attributes.awardsPanelPaddingLeft, '1.5rem');
             const awardsPanelMaxColumns = Math.max(1, editorState.awardsPanelMaxColumns || 6);
             const parentMaxColumns = Math.max(4, editorState.parentMaxColumns || 12);
             const safeAwardsPanelWidthColumns = Math.max(1, Math.min(awardsPanelMaxColumns, awardsPanelWidthColumns));
@@ -485,6 +535,14 @@
                 paddingBottom: awardsPanelPaddingBottom,
                 paddingLeft: awardsPanelPaddingLeft
             };
+            const needsAwardsSettingsHydration = parentVariation === 'awards'
+                && hasInnerBlocks
+                && !areAwardsSettingsEqual(
+                    Object.assign({}, attributes, {
+                        awardsPanelHorizontalAlignment: existingAwardsPanelState.horizontalAlignment
+                    }),
+                    existingAwardsPanelState
+                );
             const blockProps = useBlockProps({
                 className: 'mpma-internal-full-width-carousel-slide-editor' + (parentVariation === 'awards' ? ' is-awards' : '')
             });
@@ -536,6 +594,34 @@
             ]);
 
             useEffect(function() {
+                if (!needsAwardsSettingsHydration) {
+                    return;
+                }
+
+                setAttributes({
+                    awardsPanelWidthColumns: existingAwardsPanelState.widthColumns,
+                    awardsPanelVerticalAlignment: existingAwardsPanelState.verticalAlignment,
+                    awardsShowBullets: existingAwardsPanelState.showBullets,
+                    awardsShowDividers: existingAwardsPanelState.showDividers,
+                    awardsPanelPaddingTop: existingAwardsPanelState.paddingTop,
+                    awardsPanelPaddingRight: existingAwardsPanelState.paddingRight,
+                    awardsPanelPaddingBottom: existingAwardsPanelState.paddingBottom,
+                    awardsPanelPaddingLeft: existingAwardsPanelState.paddingLeft
+                });
+            }, [
+                needsAwardsSettingsHydration,
+                existingAwardsPanelState.widthColumns,
+                existingAwardsPanelState.verticalAlignment,
+                existingAwardsPanelState.showBullets,
+                existingAwardsPanelState.showDividers,
+                existingAwardsPanelState.paddingTop,
+                existingAwardsPanelState.paddingRight,
+                existingAwardsPanelState.paddingBottom,
+                existingAwardsPanelState.paddingLeft,
+                setAttributes
+            ]);
+
+            useEffect(function() {
                 if (!hasInnerBlocks) {
                     return;
                 }
@@ -544,7 +630,7 @@
             }, [clientId, hasInnerBlocks, parentMaxColumns]);
 
             useEffect(function() {
-                if (parentVariation !== 'awards' || !hasInnerBlocks) {
+                if (parentVariation !== 'awards' || !hasInnerBlocks || needsAwardsSettingsHydration) {
                     return;
                 }
 
@@ -553,6 +639,7 @@
                 clientId,
                 parentVariation,
                 hasInnerBlocks,
+                needsAwardsSettingsHydration,
                 parentMaxColumns,
                 awardsSettings.widthColumns,
                 awardsSettings.verticalAlignment,

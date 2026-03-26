@@ -25,6 +25,103 @@ if ( ! $nav_inactive_color ) {
 
 $slides = array();
 
+if ( ! function_exists( 'tailpress_sync_awards_slide_render_attrs' ) ) {
+	/**
+	 * Sync awards slide attributes onto the nested rendered block tree.
+	 *
+	 * @param array $block Parsed block array.
+	 * @param array $slide_attrs Slide-level attributes.
+	 * @return array
+	 */
+	function tailpress_sync_awards_slide_render_attrs( array $block, array $slide_attrs ): array {
+		if ( empty( $block['innerBlocks'] ) || ! is_array( $block['innerBlocks'] ) ) {
+			return $block;
+		}
+
+		$horizontal_alignment = sanitize_key( (string) ( $slide_attrs['awardsPanelHorizontalAlignment'] ?? '' ) );
+		if ( ! in_array( $horizontal_alignment, array( 'left', 'center', 'right' ), true ) ) {
+			$horizontal_alignment = 'center';
+		}
+
+		$vertical_alignment = sanitize_key( (string) ( $slide_attrs['awardsPanelVerticalAlignment'] ?? '' ) );
+		if ( ! in_array( $vertical_alignment, array( 'top', 'center', 'bottom' ), true ) ) {
+			$vertical_alignment = 'top';
+		}
+
+		$width_columns = isset( $slide_attrs['awardsPanelWidthColumns'] ) ? (int) $slide_attrs['awardsPanelWidthColumns'] : 6;
+		$width_columns = max( 1, min( 12, $width_columns ) );
+
+		$padding = array(
+			'top'    => (string) ( $slide_attrs['awardsPanelPaddingTop'] ?? '2rem' ),
+			'right'  => (string) ( $slide_attrs['awardsPanelPaddingRight'] ?? '1.5rem' ),
+			'bottom' => (string) ( $slide_attrs['awardsPanelPaddingBottom'] ?? '2rem' ),
+			'left'   => (string) ( $slide_attrs['awardsPanelPaddingLeft'] ?? '1.5rem' ),
+		);
+
+		$show_bullets = ! empty( $slide_attrs['awardsShowBullets'] );
+		$show_dividers = ! array_key_exists( 'awardsShowDividers', $slide_attrs ) || ! empty( $slide_attrs['awardsShowDividers'] );
+		$list_class = 'mpma-internal-carousel-awards-list';
+		if ( $show_bullets ) {
+			$list_class .= ' has-bullets';
+		}
+		if ( $show_dividers ) {
+			$list_class .= ' has-dividers';
+		}
+
+		foreach ( $block['innerBlocks'] as $index => $inner_block ) {
+			if ( ! is_array( $inner_block ) ) {
+				continue;
+			}
+
+			$block_name = $inner_block['blockName'] ?? '';
+			$attrs = isset( $inner_block['attrs'] ) && is_array( $inner_block['attrs'] ) ? $inner_block['attrs'] : array();
+
+			if ( 'tailpress/mpma-internal-layout' === $block_name ) {
+				$attrs['contentPosition'] = $horizontal_alignment;
+				$attrs['contentColumns'] = max( 4, $width_columns );
+				$inner_block['attrs'] = $attrs;
+			} elseif ( 'tailpress/mpma-internal-layout-column' === $block_name ) {
+				$attrs['widthColumns'] = $width_columns;
+				$attrs['verticalAlignment'] = $vertical_alignment;
+				$inner_block['attrs'] = $attrs;
+			} elseif ( 'core/group' === $block_name ) {
+				$class_name = isset( $attrs['className'] ) ? (string) $attrs['className'] : '';
+				if ( false !== strpos( $class_name, 'mpma-internal-carousel-awards-panel' ) ) {
+					if ( false === strpos( $class_name, 'mpma-internal-carousel-awards-panel--carousel' ) ) {
+						$class_name = trim( $class_name . ' mpma-internal-carousel-awards-panel--carousel' );
+						$attrs['className'] = $class_name;
+					}
+					$current_style = isset( $attrs['style'] ) && is_array( $attrs['style'] ) ? $attrs['style'] : array();
+					$current_spacing = isset( $current_style['spacing'] ) && is_array( $current_style['spacing'] ) ? $current_style['spacing'] : array();
+					$attrs['style'] = array_merge(
+						$current_style,
+						array(
+							'spacing' => array_merge(
+								$current_spacing,
+								array(
+									'padding' => $padding,
+								)
+							),
+						)
+					);
+					$inner_block['attrs'] = $attrs;
+				}
+			} elseif ( 'core/list' === $block_name ) {
+				$attrs['className'] = $list_class;
+				$inner_block['attrs'] = $attrs;
+			}
+
+			if ( ! empty( $inner_block['innerBlocks'] ) && is_array( $inner_block['innerBlocks'] ) ) {
+				$inner_block = tailpress_sync_awards_slide_render_attrs( $inner_block, $slide_attrs );
+			}
+
+			$block['innerBlocks'][ $index ] = $inner_block;
+		}
+
+		return $block;
+	}
+}
+
 if ( isset( $block ) && is_object( $block ) && isset( $block->parsed_block['innerBlocks'] ) && is_array( $block->parsed_block['innerBlocks'] ) ) {
 	foreach ( $block->parsed_block['innerBlocks'] as $index => $inner_block ) {
 		if ( ! is_array( $inner_block ) || ( $inner_block['blockName'] ?? '' ) !== 'tailpress/mpma-internal-full-width-carousel-slide' ) {
@@ -37,6 +134,10 @@ if ( isset( $block ) && is_object( $block ) && isset( $block->parsed_block['inne
 		if ( '' === $nav_label ) {
 			/* translators: %d: slide number */
 			$nav_label = sprintf( __( 'Slide %d', 'tailpress' ), $index + 1 );
+		}
+
+		if ( 'awards' === $variation ) {
+			$inner_block = tailpress_sync_awards_slide_render_attrs( $inner_block, $slide_attrs );
 		}
 
 		$slides[] = array(

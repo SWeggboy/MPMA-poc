@@ -14,19 +14,21 @@
             return select('core/editor').getCurrentPostType();
         }, []);
         
-        // Only show on pages
-        if (postType !== 'page') {
+        // Only show on pages and posts
+        if (postType !== 'page' && postType !== 'post' && postType !== 'tribe_events') {
             return null;
         }
 
         const meta = useSelect(function(select) {
             const currentMeta = select('core/editor').getEditedPostAttribute('meta');
+            const defaultSectionsCollapsible = postType === 'page';
             return {
+                sectionsCollapsible: typeof currentMeta?.show_events_collapsible !== 'undefined' ? currentMeta.show_events_collapsible : defaultSectionsCollapsible,
                 showCourses: typeof currentMeta?.show_events_courses !== 'undefined' ? currentMeta.show_events_courses : true,
                 showWebinars: typeof currentMeta?.show_events_webinars !== 'undefined' ? currentMeta.show_events_webinars : true,
                 showEvents: typeof currentMeta?.show_events_events !== 'undefined' ? currentMeta.show_events_events : true,
             };
-        }, []);
+        }, [postType]);
 
         const { editPost } = useDispatch('core/editor');
 
@@ -47,6 +49,12 @@
                 title: __('Upcoming Events Sections', 'tailpress'),
                 className: 'events-sections-visibility-panel'
             },
+            createElement(ToggleControl, {
+                label: __('Use Collapsible Sections', 'tailpress'),
+                checked: meta.sectionsCollapsible,
+                onChange: handleToggle('show_events_collapsible'),
+                help: __('Turn off to keep the sidebar section headings static on this page.', 'tailpress')
+            }),
             createElement(ToggleControl, {
                 label: __('Show Upcoming Courses', 'tailpress'),
                 checked: meta.showCourses,
